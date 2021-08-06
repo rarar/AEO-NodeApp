@@ -1,28 +1,21 @@
 {
-  "name": "threejs-boilerplate",
+  "name": "AEO-App",
   "version": "1.0.0",
-  "description": "A Threejs Boilerplate to aid in quick prototyping",
+  "description": "Node/Three.js app for AEO",
   "scripts": {
     "start": "node app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Sean-Bradley/Threejs-Boilerplate.git"
-  },
   "keywords": [
-    "threejs",
-    "boilerplate",
-    "threejs boilerplate"
+    "an ecological oracle",
+    "systems",
+    "art"
   ],
   "author": "Sean Bradley",
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/Sean-Bradley/Threejs-Boilerplate/issues"
-  },
-  "homepage": "https://github.com/Sean-Bradley/Threejs-Boilerplate#readme",
+  "homepage": "https://work.rarar.com",
   "dependencies": {
     "express": "^4.17.1",
-    "three": "^0.130.1"
+    "three": "^0.131.3"
   }
 }

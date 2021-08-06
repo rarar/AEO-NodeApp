@@ -1,62 +1,111 @@
 import * as THREE from 'three'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+import {
+  OrbitControls
+} from 'three/examples/jsm/controls/OrbitControls'
 import Stats from 'three/examples/jsm/libs/stats.module'
-import { GUI } from 'three/examples/jsm/libs/dat.gui.module'
+import {
+  GUI
+} from 'three/examples/jsm/libs/dat.gui.module'
+import {
+  GLTFLoader
+} from 'three/examples/jsm/loaders/GLTFLoader';
 
-const scene = new THREE.Scene()
+let renderer, scene, camera;
 
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100)
-camera.position.z = 2
+init();
 
-const renderer = new THREE.WebGLRenderer()
-renderer.setSize(window.innerWidth, window.innerHeight)
-document.body.appendChild(renderer.domElement)
+function init() {
 
-const controls = new OrbitControls(camera, renderer.domElement)
+  // renderer
+  renderer = new THREE.WebGLRenderer({
+    antialias: true
+  });
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1;
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
 
-const geometry = new THREE.BoxGeometry()
-const material = new THREE.MeshBasicMaterial({
-    color: 0x00ff00,
-    wireframe: true,
-})
-const cube = new THREE.Mesh(geometry, material)
-scene.add(cube)
+  renderer.outputEncoding = THREE.sRGBEncoding;
 
-window.addEventListener(
-    'resize',
-    () => {
-        camera.aspect = window.innerWidth / window.innerHeight
-        camera.updateProjectionMatrix()
-        renderer.setSize(window.innerWidth, window.innerHeight)
-        render()
-    },
-    false
-)
+  // scene
+  scene = new THREE.Scene();
 
-const stats = Stats()
-document.body.appendChild(stats.dom)
+  // camera
+  camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 2000);
+  camera.position.set(0, 100, 2000);
+  scene.add(camera);
 
-const gui = new GUI()
-const cubeFolder = gui.addFolder('Cube')
-cubeFolder.add(cube.scale, 'x', -5, 5)
-cubeFolder.add(cube.scale, 'y', -5, 5)
-cubeFolder.add(cube.scale, 'z', -5, 5)
-cubeFolder.open()
-const cameraFolder = gui.addFolder('Camera')
-cameraFolder.add(camera.position, 'z', 0, 10)
-cameraFolder.open()
+  // controls
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.target.set(0, 5, 0);
+  controls.update();
+  controls.addEventListener('change', render);
+  // controls.minDistance = 100;
+  // controls.maxDistance = 10000;
+  // controls.enablePan = true;
 
-function animate() {
-    requestAnimationFrame(animate)
-    cube.rotation.x += 0.01
-    cube.rotation.y += 0.01
-    controls.update()
-    render()
-    stats.update()
+  // ambient
+  scene.add(new THREE.AmbientLight(0xffffff, 1));
+
+  // // light
+  // const light = new THREE.PointLight(0xffffff, 1.5);
+  // camera.add(light);
+
+  // model
+  new GLTFLoader().load('Earth_1_12756.glb', function(gltf) {
+
+    gltf.scene.traverse(function(child) {
+
+      if (child.isMesh) {
+
+        // glTF currently supports only tangent-space normal maps.
+        // this model has been modified to demonstrate the use of an object-space normal map.
+
+        child.material.normalMapType = THREE.ObjectSpaceNormalMap;
+
+        // attribute normals are not required with an object-space normal map. remove them.
+
+        child.geometry.deleteAttribute('normal');
+
+        //
+
+        child.material.side = THREE.DoubleSide;
+
+        //child.scale.multiplyScalar(1);
+
+        // recenter
+
+        new THREE.Box3().setFromObject(child).getCenter(child.position).multiplyScalar(-1);
+
+        scene.add(child);
+
+      }
+
+    });
+
+    render();
+
+  });
+
+
+  window.addEventListener('resize', onWindowResize);
+
+}
+
+function onWindowResize() {
+
+  renderer.setSize(window.innerWidth, window.innerHeight);
+
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+
+  render();
+
 }
 
 function render() {
-    renderer.render(scene, camera)
-}
 
-animate()
+  renderer.render(scene, camera);
+
+}
