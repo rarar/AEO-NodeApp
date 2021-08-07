@@ -9,8 +9,44 @@ import {
 import {
   GLTFLoader
 } from 'three/examples/jsm/loaders/GLTFLoader';
+import {
+  EffectComposer
+} from 'three/examples/jsm/postprocessing/EffectComposer';
+import {
+  RenderPass
+} from 'three/examples/jsm/postprocessing/RenderPass';
+import {
+  GlitchPass
+} from 'three/examples/jsm/postprocessing/GlitchPass';
+import {
+  ShaderPass
+} from 'three/examples/jsm/postprocessing/ShaderPass';
+import {
+  PixelShader
+} from 'three/examples/jsm/shaders/PixelShader';
+import {
+  UnrealBloomPass
+} from 'three/examples/jsm/postprocessing/UnrealBloomPass';
+import {
+  SepiaShader
+} from 'three/examples/jsm/shaders/SepiaShader';
+import {
+  GammaCorrectionShader
+} from 'three/examples/jsm/shaders/GammaCorrectionShader';
+import {
+  FilmPass
+} from 'three/examples/jsm/postprocessing/FilmPass';
 
-let renderer, scene, camera;
+let renderer, scene, camera, model, composer1, composer2;
+let pixelPass, effectSepia;
+
+
+const bloomParams = {
+  exposure: 0.2,
+  bloomStrength: 2,
+  bloomThreshold: 0,
+  bloomRadius: 0.5
+};
 
 init();
 
@@ -36,21 +72,66 @@ function init() {
   camera.position.set(0, 100, 2000);
   scene.add(camera);
 
-  // controls
-  const controls = new OrbitControls(camera, renderer.domElement);
-  controls.target.set(0, 5, 0);
-  controls.update();
-  controls.addEventListener('change', render);
-  // controls.minDistance = 100;
-  // controls.maxDistance = 10000;
-  // controls.enablePan = true;
+  // // controls
+  // const controls = new OrbitControls(camera, renderer.domElement);
+  // controls.target.set(0, 5, 0);
+  // controls.update();
+  // controls.addEventListener('change', render);
+  // // controls.minDistance = 100;
+  // // controls.maxDistance = 10000;
+  // // controls.enablePan = true;
 
   // ambient
   scene.add(new THREE.AmbientLight(0xffffff, 1));
 
-  // // light
-  // const light = new THREE.PointLight(0xffffff, 1.5);
-  // camera.add(light);
+  // const dirLight = new THREE.DirectionalLight(0xffffff, .75);
+  // dirLight.position.set(1, 1, 1);
+  // scene.add(dirLight);
+
+  const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444);
+  hemiLight.position.set(0, 1000, 0);
+  scene.add(hemiLight);
+
+  const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+  dirLight.position.set(-3000, 1000, -1000);
+  scene.add(dirLight);
+
+  // shader stuff
+  let shaderSepia = SepiaShader;
+  effectSepia = new ShaderPass(shaderSepia);
+  let gammaCorrection = new ShaderPass(GammaCorrectionShader);
+
+  effectSepia.uniforms["amount"].value = 0.9;
+
+  let effectFilm = new FilmPass(0.35, 0.025, 648, false);
+  let effectFilmBW = new FilmPass(0.35, 0.5, 2048, true);
+
+
+
+  composer1 = new EffectComposer(renderer);
+  composer1.addPass(new RenderPass(scene, camera));
+  composer1.addPass(effectFilm);
+
+  composer2 = new EffectComposer(renderer);
+  composer2.addPass(new RenderPass(scene, camera));
+  // composer2.addPass(gammaCorrection);
+  // composer2.addPass(effectFilm);
+  // composer1.addPass(effectSepia);
+  composer2.addPass(effectFilm);
+  composer2.addPass(effectSepia);
+
+  pixelPass = new ShaderPass(PixelShader);
+  pixelPass.uniforms["resolution"].value = new THREE.Vector2(window.innerWidth, window.innerHeight);
+  pixelPass.uniforms["resolution"].value.multiplyScalar(window.devicePixelRatio);
+  pixelPass.uniforms["pixelSize"].value = 8;
+  composer2.addPass(pixelPass);
+
+  const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.2, 0.2, 0.35);
+  bloomPass.threshold = bloomParams.bloomThreshold;
+  bloomPass.strength = bloomParams.bloomStrength;
+  bloomPass.radius = bloomParams.bloomRadius;
+  composer1.addPass(bloomPass);
+  composer2.addPass(bloomPass);
 
   // model
   new GLTFLoader().load('Earth_1_12756.glb', function(gltf) {
@@ -77,14 +158,15 @@ function init() {
         // recenter
 
         new THREE.Box3().setFromObject(child).getCenter(child.position).multiplyScalar(-1);
-
-        scene.add(child);
-
+        model = child;
+        model.rotation.z = .22;
+        scene.add(model);
+        render();
       }
 
     });
+    //animate();
 
-    render();
 
   });
 
@@ -105,7 +187,23 @@ function onWindowResize() {
 }
 
 function render() {
-
-  renderer.render(scene, camera);
+  requestAnimationFrame(render);
+  const halfWidth = window.innerWidth / 2;
+  model.rotation.y += 0.005;
+  renderer.setScissorTest(true);
+  renderer.setScissor(0, 0, halfWidth, window.innerHeight);
+  composer1.render();
+  renderer.setScissor(halfWidth, 0, halfWidth, window.innerHeight);
+  composer2.render();
+  renderer.setScissorTest(false);
+  if (renderer.info.render.frame % 120 == 0) {
+    let pixelSize = Math.floor(Math.random() * 15) + 1;
+    let sepiaValue = Math.random();
+    console.log("pixel size = " + pixelSize);
+    console.log("sepia value = " + sepiaValue);
+    pixelPass.uniforms["pixelSize"].value = pixelSize;
+    effectSepia.uniforms["amount"].value;
+  }
+  //renderer.render(scene, camera);
 
 }
