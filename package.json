@@ -14,7 +14,9 @@
   "author": "Raphael Arar",
   "homepage": "https://work.rarar.com",
   "dependencies": {
+    "@abandonware/noble": "^1.9.2-14",
     "express": "^4.17.1",
+    "node-web-bluetooth": "^1.2.0",
     "nodemon": "^2.0.12",
     "three": "^0.131.3"
   }

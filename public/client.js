@@ -37,7 +37,7 @@ import {
   FilmPass
 } from 'three/examples/jsm/postprocessing/FilmPass';
 
-let renderer, scene, camera, model, composer1, composer2;
+let renderer, scene, camera, model, composer1, composer2, fullComposer;
 let pixelPass, effectSepia;
 
 
@@ -117,8 +117,12 @@ function init() {
   // composer2.addPass(gammaCorrection);
   // composer2.addPass(effectFilm);
   // composer1.addPass(effectSepia);
-  composer2.addPass(effectFilm);
+  // composer2.addPass(effectFilm);
   composer2.addPass(effectSepia);
+
+  fullComposer = new EffectComposer(renderer);
+  fullComposer.addPass(new RenderPass(scene, camera));
+  fullComposer.addPass(effectFilm);
 
   pixelPass = new ShaderPass(PixelShader);
   pixelPass.uniforms["resolution"].value = new THREE.Vector2(window.innerWidth, window.innerHeight);
@@ -132,6 +136,7 @@ function init() {
   bloomPass.radius = bloomParams.bloomRadius;
   composer1.addPass(bloomPass);
   composer2.addPass(bloomPass);
+  fullComposer.addPass(bloomPass);
 
   // model
   new GLTFLoader().load('Earth_1_12756.glb', function(gltf) {
@@ -196,6 +201,7 @@ function render() {
   renderer.setScissor(halfWidth, 0, halfWidth, window.innerHeight);
   composer2.render();
   renderer.setScissorTest(false);
+  //fullComposer.render();
   if (renderer.info.render.frame % 120 == 0) {
     let pixelSize = Math.floor(Math.random() * 15) + 1;
     let sepiaValue = Math.random();
