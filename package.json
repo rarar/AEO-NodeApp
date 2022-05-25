@@ -18,6 +18,7 @@
     "express": "^4.17.1",
     "node-web-bluetooth": "^1.2.0",
     "nodemon": "^2.0.12",
+    "serialport": "^10.4.0",
     "three": "^0.131.3"
   }
 }

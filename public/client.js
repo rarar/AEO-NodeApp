@@ -38,7 +38,9 @@ import {
 } from 'three/examples/jsm/postprocessing/FilmPass';
 
 let renderer, scene, camera, model, composer1, composer2, fullComposer;
-let pixelPass, effectSepia;
+let pixelPass, effectSepia, bloomPass;
+let tippingPointOn = false;
+let volumeLevel = 0;
 
 
 const bloomParams = {
@@ -51,6 +53,40 @@ const bloomParams = {
 init();
 
 function init() {
+
+  navigator.mediaDevices.getUserMedia({
+  audio: true,
+  video: false
+})
+  .then(function(stream) {
+    const audioContext = new AudioContext();
+    const analyser = audioContext.createAnalyser();
+    const microphone = audioContext.createMediaStreamSource(stream);
+    const scriptProcessor = audioContext.createScriptProcessor(2048, 1, 1);
+
+    analyser.smoothingTimeConstant = 0.8;
+    analyser.fftSize = 1024;
+
+    microphone.connect(analyser);
+    analyser.connect(scriptProcessor);
+    scriptProcessor.connect(audioContext.destination);
+    scriptProcessor.onaudioprocess = function() {
+      const array = new Uint8Array(analyser.frequencyBinCount);
+      analyser.getByteFrequencyData(array);
+      const arraySum = array.reduce((a, value) => a + value, 0);
+      //const average = arraySum / array.length;
+      const rms = Math.sqrt(arraySum / array.length);
+      volumeLevel = Math.round(rms * 10) / 10;
+      if (volumeLevel == 0) volumeLevel = 1;
+      const volumeReading = document.querySelector(".right .noise h2");
+      console.log("volume reading = " + volumeReading);
+      volumeReading.innerHTML = volumeLevel + " dB";
+    };
+  })
+  .catch(function(err) {
+    /* handle the error */
+    console.error(err);
+  });
 
   // renderer
   renderer = new THREE.WebGLRenderer({
@@ -107,14 +143,13 @@ function init() {
   let effectFilmBW = new FilmPass(0.35, 0.5, 2048, true);
 
 
-
   composer1 = new EffectComposer(renderer);
   composer1.addPass(new RenderPass(scene, camera));
   composer1.addPass(effectFilm);
 
   composer2 = new EffectComposer(renderer);
   composer2.addPass(new RenderPass(scene, camera));
-  // composer2.addPass(gammaCorrection);
+  //composer2.addPass(gammaCorrection);
   // composer2.addPass(effectFilm);
   // composer1.addPass(effectSepia);
   // composer2.addPass(effectFilm);
@@ -130,7 +165,7 @@ function init() {
   pixelPass.uniforms["pixelSize"].value = 8;
   composer2.addPass(pixelPass);
 
-  const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.2, 0.2, 0.35);
+  bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.2, 0.2, 0.35);
   bloomPass.threshold = bloomParams.bloomThreshold;
   bloomPass.strength = bloomParams.bloomStrength;
   bloomPass.radius = bloomParams.bloomRadius;
@@ -192,24 +227,43 @@ function onWindowResize() {
 }
 
 function render() {
+
+  //getAudioLevel()
+
   requestAnimationFrame(render);
   const halfWidth = window.innerWidth / 2;
   model.rotation.y += 0.005;
-  renderer.setScissorTest(true);
-  renderer.setScissor(0, 0, halfWidth, window.innerHeight);
-  composer1.render();
-  renderer.setScissor(halfWidth, 0, halfWidth, window.innerHeight);
-  composer2.render();
-  renderer.setScissorTest(false);
+  if (!tippingPointOn) {
+    renderer.setScissorTest(true);
+    renderer.setScissor(0, 0, halfWidth, window.innerHeight);
+    composer1.render();
+    renderer.setScissor(halfWidth, 0, halfWidth, window.innerHeight);
+    composer2.render();
+    renderer.setScissorTest(false);
+  } else {
+    bloomPass.strength = 10;
+    bloomPass.exposure = 0.5
+    bloomPass.radius = 10;
+    composer1.render();
+    scene.background = new THREE.Color( "rgb(255, 0, 0)" );
+  }
+
   //fullComposer.render();
+
   if (renderer.info.render.frame % 120 == 0) {
-    let pixelSize = Math.floor(Math.random() * 15) + 1;
-    let sepiaValue = Math.random();
-    console.log("pixel size = " + pixelSize);
-    console.log("sepia value = " + sepiaValue);
-    pixelPass.uniforms["pixelSize"].value = pixelSize;
-    effectSepia.uniforms["amount"].value;
+    if (!tippingPointOn) {
+      let pixelSize = volumeLevel * 2.5;
+      let sepiaValue = volumeLevel * 2.5;
+      console.log("pixel size = " + pixelSize);
+      console.log("sepia value = " + sepiaValue);
+      pixelPass.uniforms["pixelSize"].value = pixelSize;
+    }
+    //effectSepia.uniforms["amount"].value = sepiaValue;
+  }
+
+  if (renderer.info.render.frame>=10000)  {
+    tippingPointOn = true;
+    console.log(renderer.info.render.frame);
   }
   //renderer.render(scene, camera);
-
 }
