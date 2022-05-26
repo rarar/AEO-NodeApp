@@ -41,6 +41,7 @@ let renderer, scene, camera, model, composer1, composer2, fullComposer;
 let pixelPass, effectSepia, bloomPass;
 let tippingPointOn = false;
 let volumeLevel = 0;
+let socket;
 
 
 const bloomParams = {
@@ -52,8 +53,12 @@ const bloomParams = {
 
 init();
 
-function init() {
+function sendValsToArduino() {
+  socket.emit('volume level', volumeLevel);
+}
 
+function init() {
+  socket = io();
   navigator.mediaDevices.getUserMedia({
   audio: true,
   video: false
@@ -260,10 +265,9 @@ function render() {
     }
     //effectSepia.uniforms["amount"].value = sepiaValue;
   }
-
-  if (renderer.info.render.frame>=10000)  {
-    tippingPointOn = true;
-    console.log(renderer.info.render.frame);
-  }
   //renderer.render(scene, camera);
+  sendValsToArduino();
+  socket.on('data', function(msg) {
+    tippingPointOn = true;
+  })
 }

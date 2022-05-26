@@ -2,52 +2,53 @@
 <html lang="en">
 
 <head>
-    <meta charset="utf-8">
-    <title>An Ecological Oracle</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-        body {
-            overflow: hidden;
-            margin: 0px;
-        }
+  <meta charset="utf-8">
+  <title>An Ecological Oracle</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      overflow: hidden;
+      margin: 0px;
+    }
 
-        section.left {
-          position: absolute;
-          color: white;
-          left: 8%;
-          top: 50%;
-          transform: translateY(-50%);
-        }
+    section.left {
+      position: absolute;
+      color: white;
+      left: 8%;
+      top: 50%;
+      transform: translateY(-50%);
+    }
 
-        section.right {
-          position: absolute;
-          color: white;
-          right: 8%;
-          top: 50%;
-          transform: translateY(-50%);
-          text-align: right;
-        }
+    section.right {
+      position: absolute;
+      color: white;
+      right: 8%;
+      top: 50%;
+      transform: translateY(-50%);
+      text-align: right;
+    }
 
-        h1 {
-          font-style: italic;
-          font-family: "Clifton";
-        }
+    h1 {
+      font-style: italic;
+      font-family: "Clifton";
+    }
 
-        h2 {
-          font-family: "Knif Mono";
-          font-size: 3rem;
-          margin: 0;
-        }
+    h2 {
+      font-family: "Knif Mono";
+      font-size: 3rem;
+      margin: 0;
+    }
 
-        div {
-          margin: 0 0 10vh 0;
-        }
-        div:last-child {
-          margin: 0 0 2vh 0;
-        }
-    </style>
-    <script type="importmap">
-        {
+    div {
+      margin: 0 0 10vh 0;
+    }
+
+    div:last-child {
+      margin: 0 0 2vh 0;
+    }
+  </style>
+  <script type="importmap">
+    {
           "imports": {
             "three": "./build/three.module.js",
             "three/examples/jsm/controls/OrbitControls":"./jsm/controls/OrbitControls.js",
@@ -69,43 +70,48 @@
 </head>
 
 <body>
-    <script type="module" src="client.js"></script>
-    <section class="left">
-      <div class="urbanization">
-        <h1>Tolerable Urbanization</h1>
-        <h2>< 23 people</h2>
-      </div>
-      <div class="noise">
-        <h1>Tolerable Noise Pollution</h1>
-        <h2>< 12 dB</h2>
-      </div>
-      <div class="ec02">
-        <h1>Tolerable eC02</h1>
-        <h2>< 500 ppm</h2>
-      </div>
-      <div class="tvoc">
-        <h1>Tolerable TVOC</h1>
-        <h2>< 300 ppm</h2>
-      </div>
-    </section>
-    <section class="right">
-      <div class="urbanization">
-        <h1>Current Urbanization</h1>
-        <h2>2 people</h2>
-      </div>
-      <div class="noise">
-        <h1>Current Noise Pollution</h1>
-        <h2>0</h2>
-      </div>
-      <div class="ec02">
-        <h1>Current eC02</h1>
-        <h2>404 ppm</h2>
-      </div>
-      <div class="tvoc">
-        <h1>Current TVOC</h1>
-        <h2>279 ppm</h2>
-      </div>
-    </section>
+  <section class="left">
+    <div class="urbanization">
+      <h1>Tolerable Urbanization</h1>
+      <h2>
+        < 23 people</h2>
+    </div>
+    <div class="noise">
+      <h1>Tolerable Noise Pollution</h1>
+      <h2>
+        < 12 dB</h2>
+    </div>
+    <div class="ec02">
+      <h1>Tolerable eC02</h1>
+      <h2>
+        < 500 ppm</h2>
+    </div>
+    <div class="tvoc">
+      <h1>Tolerable TVOC</h1>
+      <h2>
+        < 300 ppm</h2>
+    </div>
+  </section>
+  <section class="right">
+    <div class="urbanization">
+      <h1>Current Urbanization</h1>
+      <h2>2 people</h2>
+    </div>
+    <div class="noise">
+      <h1>Current Noise Pollution</h1>
+      <h2>0</h2>
+    </div>
+    <div class="ec02">
+      <h1>Current eC02</h1>
+      <h2>404 ppm</h2>
+    </div>
+    <div class="tvoc">
+      <h1>Current TVOC</h1>
+      <h2>279 ppm</h2>
+    </div>
+  </section>
+  <script src="socket.io.js"></script>
+  <script type="module" src="client.js"></script>
 </body>
 
 </html>
