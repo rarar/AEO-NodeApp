@@ -40,8 +40,17 @@ import {
 let renderer, scene, camera, model, composer1, composer2, fullComposer;
 let pixelPass, effectSepia, bloomPass;
 let tippingPointOn = false;
-let volumeLevel = 0;
 let socket;
+
+const URBANIZATION_THRESHOLD = 23;
+const VOLUME_THRESHOLD = 4;
+const CO2_THRESHOLD = 500;
+const TVOC_THRESHOLD = 300;
+
+let urbanizationLevel = 23;
+let volumeLevel = 0;
+let co2Level = 500;
+let tvocLevel = 300;
 
 
 const bloomParams = {
@@ -53,45 +62,71 @@ const bloomParams = {
 
 init();
 
+// Function to send data back to arduino
 function sendValsToArduino() {
   socket.emit('volume level', volumeLevel);
 }
 
+// Function to compute weights
+function computeWeights() {
+  
+}
+
 function init() {
+
+  // Initialize Socket
   socket = io();
+
+  // Mic function
   navigator.mediaDevices.getUserMedia({
-  audio: true,
-  video: false
-})
-  .then(function(stream) {
-    const audioContext = new AudioContext();
-    const analyser = audioContext.createAnalyser();
-    const microphone = audioContext.createMediaStreamSource(stream);
-    const scriptProcessor = audioContext.createScriptProcessor(2048, 1, 1);
+      audio: true,
+      video: false
+    })
+    .then(function(stream) {
+      const audioContext = new AudioContext();
+      const analyser = audioContext.createAnalyser();
+      const microphone = audioContext.createMediaStreamSource(stream);
+      const scriptProcessor = audioContext.createScriptProcessor(2048, 1, 1);
 
-    analyser.smoothingTimeConstant = 0.8;
-    analyser.fftSize = 1024;
+      analyser.smoothingTimeConstant = 0.8;
+      analyser.fftSize = 1024;
 
-    microphone.connect(analyser);
-    analyser.connect(scriptProcessor);
-    scriptProcessor.connect(audioContext.destination);
-    scriptProcessor.onaudioprocess = function() {
-      const array = new Uint8Array(analyser.frequencyBinCount);
-      analyser.getByteFrequencyData(array);
-      const arraySum = array.reduce((a, value) => a + value, 0);
-      //const average = arraySum / array.length;
-      const rms = Math.sqrt(arraySum / array.length);
-      volumeLevel = Math.round(rms * 10) / 10;
-      if (volumeLevel == 0) volumeLevel = 1;
-      const volumeReading = document.querySelector(".right .noise h2");
-      console.log("volume reading = " + volumeReading);
-      volumeReading.innerHTML = volumeLevel + " dB";
-    };
-  })
-  .catch(function(err) {
-    /* handle the error */
-    console.error(err);
-  });
+      microphone.connect(analyser);
+      analyser.connect(scriptProcessor);
+      scriptProcessor.connect(audioContext.destination);
+      scriptProcessor.onaudioprocess = function() {
+        const array = new Uint8Array(analyser.frequencyBinCount);
+        analyser.getByteFrequencyData(array);
+        const arraySum = array.reduce((a, value) => a + value, 0);
+        const rms = Math.sqrt(arraySum / array.length);
+        volumeLevel = Math.round(rms * 10) / 10;
+        if (volumeLevel == 0) volumeLevel = 1;
+        const volumeReading = document.querySelector(".right .noise h2");
+        volumeReading.innerHTML = volumeLevel + " dB";
+        if (volumeLevel > 3 * VOLUME_THRESHOLD) {
+          console.log("turning volume red");
+          volumeReading.classList.remove("yellow");
+          volumeReading.classList.remove("orange");
+          volumeReading.classList.add("red");
+        } else if (volumeLevel > 2 * VOLUME_THRESHOLD) {
+          volumeReading.classList.remove("red");
+          volumeReading.classList.remove("yellow");
+          volumeReading.classList.add("orange");
+        } else if (volumeLevel > 1.5 * VOLUME_THRESHOLD) {
+          volumeReading.classList.remove("red");
+          volumeReading.classList.remove("orange");
+          volumeReading.classList.add("yellow");
+        } else {
+          volumeReading.classList.remove("red");
+          volumeReading.classList.remove("orange");
+          volumeReading.classList.remove("yellow");
+        }
+      };
+    })
+    .catch(function(err) {
+      /* handle the error */
+      console.error(err);
+    });
 
   // renderer
   renderer = new THREE.WebGLRenderer({
@@ -113,21 +148,8 @@ function init() {
   camera.position.set(0, 100, 2000);
   scene.add(camera);
 
-  // // controls
-  // const controls = new OrbitControls(camera, renderer.domElement);
-  // controls.target.set(0, 5, 0);
-  // controls.update();
-  // controls.addEventListener('change', render);
-  // // controls.minDistance = 100;
-  // // controls.maxDistance = 10000;
-  // // controls.enablePan = true;
-
   // ambient
   scene.add(new THREE.AmbientLight(0xffffff, 1));
-
-  // const dirLight = new THREE.DirectionalLight(0xffffff, .75);
-  // dirLight.position.set(1, 1, 1);
-  // scene.add(dirLight);
 
   const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444);
   hemiLight.position.set(0, 1000, 0);
@@ -154,10 +176,6 @@ function init() {
 
   composer2 = new EffectComposer(renderer);
   composer2.addPass(new RenderPass(scene, camera));
-  //composer2.addPass(gammaCorrection);
-  // composer2.addPass(effectFilm);
-  // composer1.addPass(effectSepia);
-  // composer2.addPass(effectFilm);
   composer2.addPass(effectSepia);
 
   fullComposer = new EffectComposer(renderer);
@@ -194,11 +212,7 @@ function init() {
 
         child.geometry.deleteAttribute('normal');
 
-        //
-
         child.material.side = THREE.DoubleSide;
-
-        //child.scale.multiplyScalar(1);
 
         // recenter
 
@@ -210,16 +224,11 @@ function init() {
       }
 
     });
-    //animate();
-
-
   });
-
-
   window.addEventListener('resize', onWindowResize);
-
 }
 
+// Resize function
 function onWindowResize() {
 
   renderer.setSize(window.innerWidth, window.innerHeight);
@@ -231,13 +240,14 @@ function onWindowResize() {
 
 }
 
-function render() {
 
-  //getAudioLevel()
+// Main render loop
+function render() {
 
   requestAnimationFrame(render);
   const halfWidth = window.innerWidth / 2;
   model.rotation.y += 0.005;
+
   if (!tippingPointOn) {
     renderer.setScissorTest(true);
     renderer.setScissor(0, 0, halfWidth, window.innerHeight);
@@ -246,28 +256,63 @@ function render() {
     composer2.render();
     renderer.setScissorTest(false);
   } else {
+    // If the tipping point happens, blow shit up
     bloomPass.strength = 10;
     bloomPass.exposure = 0.5
     bloomPass.radius = 10;
     composer1.render();
-    scene.background = new THREE.Color( "rgb(255, 0, 0)" );
+    scene.background = new THREE.Color("rgb(255, 0, 0)");
+  }
+  if (!tippingPointOn) {
+    let pixelSize = volumeLevel * 2.5; // update this to include all sensor data
+    let sepiaValue = volumeLevel * 2.5; // update this to include all sensor data
+    console.log("pixel size = " + pixelSize);
+    console.log("sepia value = " + sepiaValue);
+    pixelPass.uniforms["pixelSize"].value = pixelSize;
   }
 
-  //fullComposer.render();
-
-  if (renderer.info.render.frame % 120 == 0) {
-    if (!tippingPointOn) {
-      let pixelSize = volumeLevel * 2.5;
-      let sepiaValue = volumeLevel * 2.5;
-      console.log("pixel size = " + pixelSize);
-      console.log("sepia value = " + sepiaValue);
-      pixelPass.uniforms["pixelSize"].value = pixelSize;
-    }
-    //effectSepia.uniforms["amount"].value = sepiaValue;
-  }
-  //renderer.render(scene, camera);
   sendValsToArduino();
-  socket.on('data', function(msg) {
-    tippingPointOn = true;
-  })
+  socket.on('tipping point', function(msg) {
+    if (msg == 0) tippingPointOn = true;
+  });
+  socket.on('c02', function(msg) {
+    document.querySelector(".right .ec02 h2").innerHTML = "" + msg + " ppm";
+    if (msg > 3 * CO2_THRESHOLD) {
+      document.querySelector(".right .ec02 h2").classList.remove("yellow");
+      document.querySelector(".right .ec02 h2").classList.remove("orange");
+      document.querySelector(".right .ec02 h2").classList.add("red");
+    } else if (msg > 2 * CO2_THRESHOLD) {
+      document.querySelector(".right .ec02 h2").classList.remove("red");
+      document.querySelector(".right .ec02 h2").classList.remove("yellow");
+      document.querySelector(".right .ec02 h2").classList.add("orange");
+    } else if (msg > 1.5 * CO2_THRESHOLD) {
+      document.querySelector(".right .ec02 h2").classList.remove("red");
+      document.querySelector(".right .ec02 h2").classList.remove("orange");
+      document.querySelector(".right .ec02 h2").classList.add("yellow");
+    } else {
+      document.querySelector(".right .ec02 h2").classList.remove("red");
+      document.querySelector(".right .ec02 h2").classList.remove("orange");
+      document.querySelector(".right .ec02 h2").classList.remove("yellow");
+    }
+  });
+  socket.on('tvoc', function(msg) {
+    document.querySelector(".right .tvoc h2").innerHTML = "" + msg + " ppm";
+    if (msg > 3 * TVOC_THRESHOLD) {
+      document.querySelector(".right .tvoc h2").classList.remove("yellow");
+      document.querySelector(".right .tvoc h2").classList.remove("orange");
+      document.querySelector(".right .tvoc h2").classList.add("red");
+    } else if (msg > 2 * TVOC_THRESHOLD) {
+      document.querySelector(".right .tvoc h2").classList.remove("red");
+      document.querySelector(".right .tvoc h2").classList.remove("yellow");
+      document.querySelector(".right .tvoc h2").classList.add("orange");
+    } else if (msg > 1.5 * TVOC_THRESHOLD) {
+      document.querySelector(".right .tvoc h2").classList.remove("red");
+      document.querySelector(".right .tvoc h2").classList.remove("orange");
+      document.querySelector(".right .tvoc h2").classList.add("yellow");
+    } else {
+      document.querySelector(".right .tvoc h2").classList.remove("red");
+      document.querySelector(".right .tvoc h2").classList.remove("orange");
+      document.querySelector(".right .tvoc h2").classList.remove("yellow");
+    }
+  });
 }

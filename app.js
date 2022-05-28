@@ -24,8 +24,11 @@ const parser = port.pipe(new ReadlineParser({
 }))
 
 parser.on('data', data => {
-  console.log('got word from arduino:', data);
-  io.emit('data', data);
+  let dataArray = data.split(":");
+//  console.log('got word from arduino:', dataArray[1]);
+  io.emit('tipping point', dataArray[0]);
+  io.emit('c02', dataArray[1]);
+  io.emit('tvoc', dataArray[2]);
 });
 // const noble = require('@abandonware/noble');
 // const RSSI_THRESHOLD    = -80;
