@@ -47,6 +47,12 @@ const VOLUME_THRESHOLD = 4;
 const CO2_THRESHOLD = 500;
 const TVOC_THRESHOLD = 300;
 
+// WEIGHTS
+const URBANIZATION_WEIGHT = 4;
+const VOLUME_WEIGHT = 1;
+const CO2_WEIGHT = 2;
+const TVOC_WEIGHT = 2;
+
 let urbanizationLevel = 23;
 let volumeLevel = 0;
 let co2Level = 500;
@@ -67,15 +73,29 @@ function sendValsToArduino() {
   socket.emit('volume level', volumeLevel);
 }
 
+function setUpThresholdView() {
+  document.querySelector(".left .urbanization h2").innerHTML = "< " + URBANIZATION_THRESHOLD + " people";
+  document.querySelector(".left .noise h2").innerHTML = "< " + VOLUME_THRESHOLD + " dB";
+  document.querySelector(".left .eco2 h2").innerHTML = "< " + CO2_THRESHOLD + " ppm";
+  document.querySelector(".left .tvoc h2").innerHTML = "< " + TVOC_THRESHOLD + " ppm";
+}
+
 // Function to compute weights
 function computeWeights() {
-  
+  let uRatio = (urbanizationLevel - URBANIZATION_THRESHOLD) / URBANIZATION_THRESHOLD;
+  let vRatio = (volumeLevel - VOLUME_THRESHOLD) / VOLUME_THRESHOLD;
+  let cRatio = (co2Level - CO2_THRESHOLD) / CO2_THRESHOLD;
+  let tRatio = (tvocLevel - TVOC_THRESHOLD) / TVOC_THRESHOLD;
+  let weightedAvg = ((URBANIZATION_WEIGHT*uRatio) + (VOLUME_WEIGHT*vRatio) + (CO2_WEIGHT*cRatio) + (TVOC_WEIGHT*tRatio)) / (URBANIZATION_WEIGHT + VOLUME_WEIGHT + CO2_WEIGHT + TVOC_WEIGHT);
+  console.log("uRatio: " + uRatio + " | vRatio: " + vRatio + " | cRatio: " + cRatio + " | tRatio: " + tRatio);
+  console.log("weighted avg: " + weightedAvg);
 }
 
 function init() {
 
   // Initialize Socket
   socket = io();
+  setUpThresholdView();
 
   // Mic function
   navigator.mediaDevices.getUserMedia({
@@ -266,36 +286,39 @@ function render() {
   if (!tippingPointOn) {
     let pixelSize = volumeLevel * 2.5; // update this to include all sensor data
     let sepiaValue = volumeLevel * 2.5; // update this to include all sensor data
-    console.log("pixel size = " + pixelSize);
-    console.log("sepia value = " + sepiaValue);
+    // console.log("pixel size = " + pixelSize);
+    // console.log("sepia value = " + sepiaValue);
     pixelPass.uniforms["pixelSize"].value = pixelSize;
   }
 
+  computeWeights();
   sendValsToArduino();
   socket.on('tipping point', function(msg) {
     if (msg == 0) tippingPointOn = true;
   });
-  socket.on('c02', function(msg) {
-    document.querySelector(".right .ec02 h2").innerHTML = "" + msg + " ppm";
+  socket.on('co2', function(msg) {
+    co2Level = msg;
+    document.querySelector(".right .eco2 h2").innerHTML = "" + msg + " ppm";
     if (msg > 3 * CO2_THRESHOLD) {
-      document.querySelector(".right .ec02 h2").classList.remove("yellow");
-      document.querySelector(".right .ec02 h2").classList.remove("orange");
-      document.querySelector(".right .ec02 h2").classList.add("red");
+      document.querySelector(".right .eco2 h2").classList.remove("yellow");
+      document.querySelector(".right .eco2 h2").classList.remove("orange");
+      document.querySelector(".right .eco2 h2").classList.add("red");
     } else if (msg > 2 * CO2_THRESHOLD) {
-      document.querySelector(".right .ec02 h2").classList.remove("red");
-      document.querySelector(".right .ec02 h2").classList.remove("yellow");
-      document.querySelector(".right .ec02 h2").classList.add("orange");
+      document.querySelector(".right .eco2 h2").classList.remove("red");
+      document.querySelector(".right .eco2 h2").classList.remove("yellow");
+      document.querySelector(".right .eco2 h2").classList.add("orange");
     } else if (msg > 1.5 * CO2_THRESHOLD) {
-      document.querySelector(".right .ec02 h2").classList.remove("red");
-      document.querySelector(".right .ec02 h2").classList.remove("orange");
-      document.querySelector(".right .ec02 h2").classList.add("yellow");
+      document.querySelector(".right .eco2 h2").classList.remove("red");
+      document.querySelector(".right .eco2 h2").classList.remove("orange");
+      document.querySelector(".right .eco2 h2").classList.add("yellow");
     } else {
-      document.querySelector(".right .ec02 h2").classList.remove("red");
-      document.querySelector(".right .ec02 h2").classList.remove("orange");
-      document.querySelector(".right .ec02 h2").classList.remove("yellow");
+      document.querySelector(".right .eco2 h2").classList.remove("red");
+      document.querySelector(".right .eco2 h2").classList.remove("orange");
+      document.querySelector(".right .eco2 h2").classList.remove("yellow");
     }
   });
   socket.on('tvoc', function(msg) {
+    tvocLevel = msg;
     document.querySelector(".right .tvoc h2").innerHTML = "" + msg + " ppm";
     if (msg > 3 * TVOC_THRESHOLD) {
       document.querySelector(".right .tvoc h2").classList.remove("yellow");

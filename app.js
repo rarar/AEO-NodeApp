@@ -27,7 +27,7 @@ parser.on('data', data => {
   let dataArray = data.split(":");
 //  console.log('got word from arduino:', dataArray[1]);
   io.emit('tipping point', dataArray[0]);
-  io.emit('c02', dataArray[1]);
+  io.emit('co2', dataArray[1]);
   io.emit('tvoc', dataArray[2]);
 });
 // const noble = require('@abandonware/noble');
