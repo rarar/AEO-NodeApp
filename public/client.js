@@ -79,6 +79,7 @@ function setUpThresholdView() {
   document.querySelector(".left .noise h2").innerHTML = "< " + VOLUME_THRESHOLD + " dB";
   document.querySelector(".left .eco2 h2").innerHTML = "< " + CO2_THRESHOLD + " ppm";
   document.querySelector(".left .tvoc h2").innerHTML = "< " + TVOC_THRESHOLD + " ppm";
+  document.querySelector(".top .elapsed h2").innerHTML = "00:00:00";
 }
 
 // Function to compute weights
@@ -268,38 +269,36 @@ function render() {
   requestAnimationFrame(render);
   const halfWidth = window.innerWidth / 2;
   model.rotation.y += 0.005;
-
-  if (!tippingPointOn) {
-    if (weightedAvg > 0 ) {
-      renderer.setScissorTest(true);
-      renderer.setScissor(0, 0, halfWidth, window.innerHeight);
-      composer1.render();
-      renderer.setScissor(halfWidth, 0, halfWidth, window.innerHeight);
-      composer2.render();
-      renderer.setScissorTest(false);
-      let pixelSize = weightedAvg * 2.5; // update this to include all sensor data
-      let sepiaValue = weightedAvg * 2.5; // update this to include all sensor data
-      pixelPass.uniforms["pixelSize"].value = pixelSize;
+    if (!tippingPointOn) {
+      if (weightedAvg > 0 ) {
+        renderer.setScissorTest(true);
+        renderer.setScissor(0, 0, halfWidth, window.innerHeight);
+        composer1.render();
+        renderer.setScissor(halfWidth, 0, halfWidth, window.innerHeight);
+        composer2.render();
+        renderer.setScissorTest(false);
+        let pixelSize = weightedAvg * 2.5; // update this to include all sensor data
+        let sepiaValue = weightedAvg * 2.5; // update this to include all sensor data
+        pixelPass.uniforms["pixelSize"].value = pixelSize;
+      } else {
+        composer1.render();
+      }
     } else {
-      // bloomPass.strength = 10;
-      // bloomPass.exposure = 0.5
-      // bloomPass.radius = 10;
+      // If the tipping point happens, blow shit up
+      bloomPass.strength = 10;
+      bloomPass.exposure = 0.5
+      bloomPass.radius = 10;
       composer1.render();
+      scene.background = new THREE.Color("rgb(255, 0, 0)");
     }
-  } else {
-    // If the tipping point happens, blow shit up
-    bloomPass.strength = 10;
-    bloomPass.exposure = 0.5
-    bloomPass.radius = 10;
-    composer1.render();
-    scene.background = new THREE.Color("rgb(255, 0, 0)");
-  }
 
   computeWeights();
   sendValsToArduino();
+
   socket.on('tipping point', function(msg) {
     if (msg == 0) tippingPointOn = true;
   });
+
   socket.on('co2', function(msg) {
     co2Level = msg;
     document.querySelector(".right .eco2 h2").innerHTML = "" + msg + " ppm";

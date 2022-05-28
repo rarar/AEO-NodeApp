@@ -28,6 +28,32 @@
       text-align: right;
     }
 
+    section.bottom {
+      position: absolute;
+      color: white;
+      left: 50%;
+      bottom: 2%;
+      background: rgba(0, 0, 0, .8);
+      transform: translateX(-50%);
+      text-align: center;
+      border: 2px solid white;
+      border-radius: 128px;
+      padding: 1% 4%;
+    }
+
+    section.top {
+      position: absolute;
+      color: white;
+      left: 50%;
+      top: 10%;
+      background: rgba(0, 0, 0, .8);
+      transform: translateX(-50%);
+      text-align: center;
+      border: 2px solid white;
+      border-radius: 128px;
+      padding: 1% 4%;
+    }
+
     h1 {
       font-style: italic;
       font-family: "Clifton";
@@ -35,7 +61,7 @@
 
     h2 {
       font-family: "Knif Mono";
-      font-size: 3rem;
+      font-size: 2rem;
       margin: 0;
     }
 
@@ -120,6 +146,18 @@
     <div class="tvoc">
       <h1>Current TVOC</h1>
       <h2>279 ppm</h2>
+    </div>
+  </section>
+  <section class="top">
+    <div class="elapsed">
+      <h1>Time Elapsed</h1>
+      <h2>August 31 @ 22:54</h2>
+    </div>
+  </section>
+  <section class="bottom">
+    <div class="eta">
+      <h1>Anticipated Tipping Point</h1>
+      <h2>August 31 @ 22:54</h2>
     </div>
   </section>
   <script src="socket.io.js"></script>
