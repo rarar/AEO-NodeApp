@@ -50,13 +50,14 @@ const TVOC_THRESHOLD = 300;
 // WEIGHTS
 const URBANIZATION_WEIGHT = 4;
 const VOLUME_WEIGHT = 1;
-const CO2_WEIGHT = 2;
-const TVOC_WEIGHT = 2;
+const CO2_WEIGHT = 5;
+const TVOC_WEIGHT = 5;
 
 let urbanizationLevel = 23;
 let volumeLevel = 0;
 let co2Level = 500;
 let tvocLevel = 300;
+let weightedAvg = 1;
 
 
 const bloomParams = {
@@ -86,7 +87,7 @@ function computeWeights() {
   let vRatio = (volumeLevel - VOLUME_THRESHOLD) / VOLUME_THRESHOLD;
   let cRatio = (co2Level - CO2_THRESHOLD) / CO2_THRESHOLD;
   let tRatio = (tvocLevel - TVOC_THRESHOLD) / TVOC_THRESHOLD;
-  let weightedAvg = ((URBANIZATION_WEIGHT*uRatio) + (VOLUME_WEIGHT*vRatio) + (CO2_WEIGHT*cRatio) + (TVOC_WEIGHT*tRatio)) / (URBANIZATION_WEIGHT + VOLUME_WEIGHT + CO2_WEIGHT + TVOC_WEIGHT);
+  weightedAvg = ((URBANIZATION_WEIGHT*uRatio) + (VOLUME_WEIGHT*vRatio) + (CO2_WEIGHT*cRatio) + (TVOC_WEIGHT*tRatio)) / (URBANIZATION_WEIGHT + VOLUME_WEIGHT + CO2_WEIGHT + TVOC_WEIGHT);
   console.log("uRatio: " + uRatio + " | vRatio: " + vRatio + " | cRatio: " + cRatio + " | tRatio: " + tRatio);
   console.log("weighted avg: " + weightedAvg);
 }
@@ -269,12 +270,22 @@ function render() {
   model.rotation.y += 0.005;
 
   if (!tippingPointOn) {
-    renderer.setScissorTest(true);
-    renderer.setScissor(0, 0, halfWidth, window.innerHeight);
-    composer1.render();
-    renderer.setScissor(halfWidth, 0, halfWidth, window.innerHeight);
-    composer2.render();
-    renderer.setScissorTest(false);
+    if (weightedAvg > 0 ) {
+      renderer.setScissorTest(true);
+      renderer.setScissor(0, 0, halfWidth, window.innerHeight);
+      composer1.render();
+      renderer.setScissor(halfWidth, 0, halfWidth, window.innerHeight);
+      composer2.render();
+      renderer.setScissorTest(false);
+      let pixelSize = weightedAvg * 2.5; // update this to include all sensor data
+      let sepiaValue = weightedAvg * 2.5; // update this to include all sensor data
+      pixelPass.uniforms["pixelSize"].value = pixelSize;
+    } else {
+      // bloomPass.strength = 10;
+      // bloomPass.exposure = 0.5
+      // bloomPass.radius = 10;
+      composer1.render();
+    }
   } else {
     // If the tipping point happens, blow shit up
     bloomPass.strength = 10;
@@ -282,13 +293,6 @@ function render() {
     bloomPass.radius = 10;
     composer1.render();
     scene.background = new THREE.Color("rgb(255, 0, 0)");
-  }
-  if (!tippingPointOn) {
-    let pixelSize = volumeLevel * 2.5; // update this to include all sensor data
-    let sepiaValue = volumeLevel * 2.5; // update this to include all sensor data
-    // console.log("pixel size = " + pixelSize);
-    // console.log("sepia value = " + sepiaValue);
-    pixelPass.uniforms["pixelSize"].value = pixelSize;
   }
 
   computeWeights();
