@@ -16,7 +16,7 @@ const io = new Server(server);
 
 // Create a port
 const port = new SerialPort({
-  path: '/dev/cu.usbmodem144101',
+  path: '/dev/cu.usbmodem143301',
   baudRate: 9600,
 });
 const parser = port.pipe(new ReadlineParser({

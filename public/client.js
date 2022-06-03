@@ -43,7 +43,7 @@ let tippingPointOn = false;
 let socket;
 
 const URBANIZATION_THRESHOLD = 23;
-const VOLUME_THRESHOLD = 4;
+const VOLUME_THRESHOLD = 12;
 const CO2_THRESHOLD = 500;
 const TVOC_THRESHOLD = 300;
 
@@ -58,6 +58,10 @@ let volumeLevel = 0;
 let co2Level = 500;
 let tvocLevel = 300;
 let weightedAvg = 1;
+
+// stopwatch stuff
+let [milliseconds,seconds,minutes,hours] = [0,0,0,0];
+let int = null;
 
 
 const bloomParams = {
@@ -93,11 +97,39 @@ function computeWeights() {
   console.log("weighted avg: " + weightedAvg);
 }
 
+function displayTimer(){
+    milliseconds+=10;
+    if(milliseconds == 1000){
+        milliseconds = 0;
+        seconds++;
+        if(seconds == 60){
+            seconds = 0;
+            minutes++;
+            if(minutes == 60){
+                minutes = 0;
+                hours++;
+            }
+        }
+    }
+
+ let h = hours < 10 ? "0" + hours : hours;
+ let m = minutes < 10 ? "0" + minutes : minutes;
+ let s = seconds < 10 ? "0" + seconds : seconds;
+ let ms = milliseconds < 10 ? "00" + milliseconds : milliseconds < 100 ? "0" + milliseconds : milliseconds;
+
+ document.querySelector(".top .elapsed h2").innerHTML = `${h}:${m}:${s}`;
+}
+
+function setUpClock() {
+  int = setInterval(displayTimer,10);
+}
+
 function init() {
 
   // Initialize Socket
   socket = io();
   setUpThresholdView();
+  setUpClock();
 
   // Mic function
   navigator.mediaDevices.getUserMedia({
@@ -289,6 +321,10 @@ function render() {
       bloomPass.exposure = 0.5
       bloomPass.radius = 10;
       composer1.render();
+      clearInterval(int);
+      document.querySelector(".top .elapsed h1").innerHTML = "Time of Tipping Point";
+      document.querySelector(".bottom").classList.add("hidden");
+      document.querySelector(".top").classList.add("center");
       scene.background = new THREE.Color("rgb(255, 0, 0)");
     }
 
