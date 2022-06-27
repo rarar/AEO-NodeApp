@@ -42,18 +42,18 @@ let pixelPass, effectSepia, bloomPass;
 let tippingPointOn = false;
 let socket;
 
-const URBANIZATION_THRESHOLD = 23;
-const VOLUME_THRESHOLD = 12;
-const CO2_THRESHOLD = 500;
-const TVOC_THRESHOLD = 300;
+const URBANIZATION_THRESHOLD = 2;
+const VOLUME_THRESHOLD = 5;
+const CO2_THRESHOLD = 400;
+const TVOC_THRESHOLD = 50;
 
 // WEIGHTS
 const URBANIZATION_WEIGHT = 4;
-const VOLUME_WEIGHT = 1;
+const VOLUME_WEIGHT = 2;
 const CO2_WEIGHT = 5;
 const TVOC_WEIGHT = 5;
 
-let urbanizationLevel = 23;
+let urbanizationLevel = 2;
 let volumeLevel = 0;
 let co2Level = 500;
 let tvocLevel = 300;
@@ -75,7 +75,7 @@ init();
 
 // Function to send data back to arduino
 function sendValsToArduino() {
-  socket.emit('volume level', volumeLevel);
+  // socket.emit('weighted avg', weightedAvg.toFixed(1));
 }
 
 function setUpThresholdView() {
@@ -95,6 +95,7 @@ function computeWeights() {
   weightedAvg = ((URBANIZATION_WEIGHT*uRatio) + (VOLUME_WEIGHT*vRatio) + (CO2_WEIGHT*cRatio) + (TVOC_WEIGHT*tRatio)) / (URBANIZATION_WEIGHT + VOLUME_WEIGHT + CO2_WEIGHT + TVOC_WEIGHT);
   console.log("uRatio: " + uRatio + " | vRatio: " + vRatio + " | cRatio: " + cRatio + " | tRatio: " + tRatio);
   console.log("weighted avg: " + weightedAvg);
+  socket.emit('weighted avg', (weightedAvg*10).toFixed(1));
 }
 
 function displayTimer(){
@@ -130,6 +131,7 @@ function init() {
   socket = io();
   setUpThresholdView();
   setUpClock();
+  // setInterval(sendValsToArduino, 500);
 
   // Mic function
   navigator.mediaDevices.getUserMedia({
@@ -329,13 +331,13 @@ function render() {
     }
 
   computeWeights();
-  sendValsToArduino();
 
   socket.on('tipping point', function(msg) {
     if (msg == 0) tippingPointOn = true;
   });
 
   socket.on('co2', function(msg) {
+    // if (msg==null) return;
     co2Level = msg;
     document.querySelector(".right .eco2 h2").innerHTML = "" + msg + " ppm";
     if (msg > 3 * CO2_THRESHOLD) {
@@ -357,6 +359,7 @@ function render() {
     }
   });
   socket.on('tvoc', function(msg) {
+    // if (msg==null) return;
     tvocLevel = msg;
     document.querySelector(".right .tvoc h2").innerHTML = "" + msg + " ppm";
     if (msg > 3 * TVOC_THRESHOLD) {

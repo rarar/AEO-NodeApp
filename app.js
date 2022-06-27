@@ -16,7 +16,7 @@ const io = new Server(server);
 
 // Create a port
 const port = new SerialPort({
-  path: '/dev/cu.usbmodem143301',
+  path: '/dev/cu.usbserial-A50285BI',
   baudRate: 9600,
 });
 const parser = port.pipe(new ReadlineParser({
@@ -25,59 +25,25 @@ const parser = port.pipe(new ReadlineParser({
 
 parser.on('data', data => {
   let dataArray = data.split(":");
-//  console.log('got word from arduino:', dataArray[1]);
+  console.log("original input = " + dataArray[5]);
+  console.log("in reverse? = " + dataArray[4]);
+  console.log("mSpeed = " + dataArray[3]);
   io.emit('tipping point', dataArray[0]);
   io.emit('co2', dataArray[1]);
   io.emit('tvoc', dataArray[2]);
 });
-// const noble = require('@abandonware/noble');
-// const RSSI_THRESHOLD    = -80;
-// const EXIT_GRACE_PERIOD = 1000; // milliseconds
 
-// let inRange = [];
-//
-// noble.on('discover', function(peripheral) {
-//   if (peripheral.rssi < RSSI_THRESHOLD) {
-//     // ignore
-//     return;
-//   }
-//
-//   let uuid = peripheral.uuid;
-//
-//   let entered = !(inRange.find(function(obj) { return obj.uuid === uuid; }));
-//
-//   if (entered) {
-//     inRange.push(peripheral);
-//     console.log('"' + peripheral.advertisement + '" entered (RSSI ' + peripheral.rssi + ') ' + new Date());
-//   }
-//
-//   inRange.find(function(obj) { return obj.uuid === uuid; }).lastSeen = Date.now();
-//
-// });
-//
-// setInterval(function() {
-//
-//   inRange.forEach(function(peripheral, index) {
-//     if (peripheral.lastSeen < (Date.now() - EXIT_GRACE_PERIOD)) {
-//       console.log('"' + peripheral.advertisement.localName + '" exited (RSSI ' + peripheral.rssi + ') ' + new Date());
-//       inRange.splice(index, 1);
-//     }
-//   });
-//   console.log("Total Number of Nearby Devices is " + inRange.length);
-// }, EXIT_GRACE_PERIOD / 2);
-//
-// noble.on('stateChange', function(state) {
-//   if (state === 'poweredOn') {
-//     noble.startScanning([], true);
-//   } else {
-//     noble.stopScanning();
-//   }
-// });
 
 io.on('connection', (socket) => {
   console.log('a user connected');
-  socket.on('volume level', (vol) => {
-    console.log('volume level: ' + vol);
+  socket.on('weighted avg', (avg) => {
+    // console.log('weighted avg: ' + avg);
+    port.write(avg+'\n', (err) => {
+      if (err) {
+        return console.log('Error on write: ', err.message);
+      }
+      // console.log("wrote " + avg);
+    });
   });
 });
 
