@@ -21,21 +21,41 @@ const port = new SerialPort({
 });
 const parser = port.pipe(new ReadlineParser({
   delimiter: '\n'
-}))
+}));
+const map = (value, x1, y1, x2, y2) => (value - x1) * (y2 - x2) / (y1 - x1) + x2; // mapping function
+
+let m = 0;
+let tp = 350;
+let currentRate = 0;
 
 parser.on('data', data => {
   let dataArray = data.split(":");
   console.log("original input = " + dataArray[5]);
   console.log("in reverse? = " + dataArray[4]);
-  console.log("mSpeed = " + dataArray[3]);
+  console.log("motor speed = " + dataArray[3]);
+  if (dataArray[4]==1) {
+    currentRate = -dataArray[3];
+    currentRate = map(currentRate, 75, 255, -0.111, -1.111);
+  } else {
+    currentRate = dataArray[3];
+    currentRate = map(currentRate, 75, 255, 0.111, 1.111);
+  }
+  console.log("current rate = " + currentRate);
+
   io.emit('tipping point', dataArray[0]);
   io.emit('co2', dataArray[1]);
   io.emit('tvoc', dataArray[2]);
 });
 
+function calculateLevel() {
+  m = m + currentRate;
+  console.log("m level = " + m);
+  console.log("calculateLevel :: current rate = " + currentRate);
+}
 
 io.on('connection', (socket) => {
   console.log('a user connected');
+  setInterval(calculateLevel, 1000);
   socket.on('weighted avg', (avg) => {
     // console.log('weighted avg: ' + avg);
     port.write(avg+'\n', (err) => {

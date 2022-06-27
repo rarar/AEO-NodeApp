@@ -75,7 +75,7 @@ init();
 
 // Function to send data back to arduino
 function sendValsToArduino() {
-  // socket.emit('weighted avg', weightedAvg.toFixed(1));
+  socket.emit('weighted avg', weightedAvg.toFixed(1));
 }
 
 function setUpThresholdView() {
@@ -95,7 +95,7 @@ function computeWeights() {
   weightedAvg = ((URBANIZATION_WEIGHT*uRatio) + (VOLUME_WEIGHT*vRatio) + (CO2_WEIGHT*cRatio) + (TVOC_WEIGHT*tRatio)) / (URBANIZATION_WEIGHT + VOLUME_WEIGHT + CO2_WEIGHT + TVOC_WEIGHT);
   console.log("uRatio: " + uRatio + " | vRatio: " + vRatio + " | cRatio: " + cRatio + " | tRatio: " + tRatio);
   console.log("weighted avg: " + weightedAvg);
-  socket.emit('weighted avg', (weightedAvg*10).toFixed(1));
+  // socket.emit('weighted avg', (weightedAvg*10).toFixed(1));
 }
 
 function displayTimer(){
@@ -131,7 +131,7 @@ function init() {
   socket = io();
   setUpThresholdView();
   setUpClock();
-  // setInterval(sendValsToArduino, 500);
+  setInterval(sendValsToArduino, 1000);
 
   // Mic function
   navigator.mediaDevices.getUserMedia({
