@@ -383,4 +383,11 @@ function render() {
       document.querySelector(".right .tvoc h2").classList.remove("yellow");
     }
   });
+
+
+  socket.on('time remaining', function(msg) {
+    // if (msg==null) return;
+    document.querySelector(".bottom .eta h2").innerHTML = msg;
+  });
+
 }

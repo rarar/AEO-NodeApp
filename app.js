@@ -58,7 +58,7 @@ function calculateLevel() {
   console.log("motor speed = " + motorSpeed + ", current rate = " + currentRate + " and m level = " + m);
   timeRemaining = (tp - m ) / currentRate;
   console.log("time remaining = " + timeRemaining + " seconds");
-
+  io.emit('time remaining', timeRemaining);
 }
 
 io.on('connection', (socket) => {
