@@ -387,7 +387,20 @@ function render() {
 
   socket.on('time remaining', function(msg) {
     // if (msg==null) return;
-    document.querySelector(".bottom .eta h2").innerHTML = msg;
+    if (parseInt(msg) < 0) {
+      document.querySelector(".bottom .eta h2").innerHTML = "Regenerative State";
+      document.querySelector(".bottom .eta h1").classList.add("hidden");
+      document.querySelector(".bottom .eta h2").classList.add("clifton");
+      document.querySelector(".bottom .eta").classList.add("regen");
+      document.querySelector("section.bottom").classList.add("regen-container");
+    } else {
+      document.querySelector(".bottom .eta h2").innerHTML = msg.toFixed(1);
+      document.querySelector(".bottom .eta h1").classList.remove("hidden");
+      document.querySelector(".bottom .eta h2").classList.remove("clifton");
+      document.querySelector(".bottom .eta").classList.remove("regen");
+      document.querySelector("section.bottom").classList.remove("regen-container");
+    }
+
   });
 
 }
