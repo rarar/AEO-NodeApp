@@ -22,42 +22,50 @@ const port = new SerialPort({
 const parser = port.pipe(new ReadlineParser({
   delimiter: '\n'
 }));
-const map = (value, x1, y1, x2, y2) => (value - x1) * (y2 - x2) / (y1 - x1) + x2; // mapping function
+function scale (number, inMin, inMax, outMin, outMax) {
+    return (number - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
+}
 
 let m = 0;
 let tp = 350;
 let currentRate = 0;
+let motorSpeed = 0;
+let timeRemaining;
 
 parser.on('data', data => {
   let dataArray = data.split(":");
-  console.log("original input = " + dataArray[5]);
-  console.log("in reverse? = " + dataArray[4]);
-  console.log("motor speed = " + dataArray[3]);
+  if (dataArray[5]==undefined || dataArray[1]==0) return;
+  motorSpeed = dataArray[3];
+  // console.log("original input = " + dataArray[5]);
+  // console.log("in reverse? = " + dataArray[4]);
+  // console.log("motor speed = " + dataArray[3]);
   if (dataArray[4]==1) {
     currentRate = -dataArray[3];
-    currentRate = map(currentRate, 75, 255, -0.111, -1.111);
+    currentRate = scale(currentRate, -75.0, -255.0, -0.111, -1.05);
   } else {
     currentRate = dataArray[3];
-    currentRate = map(currentRate, 75, 255, 0.111, 1.111);
+    currentRate = scale(currentRate, 75.0, 255.0, 0.111, 1.05);
   }
-  console.log("current rate = " + currentRate);
-
+  // calculateLevel();
   io.emit('tipping point', dataArray[0]);
   io.emit('co2', dataArray[1]);
   io.emit('tvoc', dataArray[2]);
 });
 
 function calculateLevel() {
+  if (motorSpeed==0) return;
   m = m + currentRate;
-  console.log("m level = " + m);
-  console.log("calculateLevel :: current rate = " + currentRate);
+  console.log("motor speed = " + motorSpeed + ", current rate = " + currentRate + " and m level = " + m);
+  timeRemaining = (tp - m ) / currentRate;
+  console.log("time remaining = " + timeRemaining + " seconds");
+
 }
 
 io.on('connection', (socket) => {
   console.log('a user connected');
   setInterval(calculateLevel, 1000);
   socket.on('weighted avg', (avg) => {
-    // console.log('weighted avg: ' + avg);
+    console.log('weighted avg: ' + avg);
     port.write(avg+'\n', (err) => {
       if (err) {
         return console.log('Error on write: ', err.message);

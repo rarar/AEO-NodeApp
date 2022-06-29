@@ -43,13 +43,13 @@ let tippingPointOn = false;
 let socket;
 
 const URBANIZATION_THRESHOLD = 2;
-const VOLUME_THRESHOLD = 5;
-const CO2_THRESHOLD = 400;
-const TVOC_THRESHOLD = 50;
+const VOLUME_THRESHOLD = 4;
+const CO2_THRESHOLD = 300;
+const TVOC_THRESHOLD = 1;
 
 // WEIGHTS
 const URBANIZATION_WEIGHT = 4;
-const VOLUME_WEIGHT = 2;
+const VOLUME_WEIGHT = 3;
 const CO2_WEIGHT = 5;
 const TVOC_WEIGHT = 5;
 
@@ -58,6 +58,7 @@ let volumeLevel = 0;
 let co2Level = 500;
 let tvocLevel = 300;
 let weightedAvg = 1;
+let secondsElapsed = 0;
 
 // stopwatch stuff
 let [milliseconds,seconds,minutes,hours] = [0,0,0,0];
@@ -95,7 +96,8 @@ function computeWeights() {
   weightedAvg = ((URBANIZATION_WEIGHT*uRatio) + (VOLUME_WEIGHT*vRatio) + (CO2_WEIGHT*cRatio) + (TVOC_WEIGHT*tRatio)) / (URBANIZATION_WEIGHT + VOLUME_WEIGHT + CO2_WEIGHT + TVOC_WEIGHT);
   console.log("uRatio: " + uRatio + " | vRatio: " + vRatio + " | cRatio: " + cRatio + " | tRatio: " + tRatio);
   console.log("weighted avg: " + weightedAvg);
-  // socket.emit('weighted avg', (weightedAvg*10).toFixed(1));
+  console.log("seconds elapsed: " + secondsElapsed);
+  if (parseInt(secondsElapsed) < 5) weightedAvg = 1; // account for delay of AQI sensor
 }
 
 function displayTimer(){
@@ -119,6 +121,7 @@ function displayTimer(){
  let ms = milliseconds < 10 ? "00" + milliseconds : milliseconds < 100 ? "0" + milliseconds : milliseconds;
 
  document.querySelector(".top .elapsed h2").innerHTML = `${h}:${m}:${s}`;
+ secondsElapsed = s;
 }
 
 function setUpClock() {
