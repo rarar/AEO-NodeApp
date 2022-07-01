@@ -1,0 +1,110 @@
+[
+    {
+        "id": "ba2b8af8152cf861",
+        "type": "tab",
+        "label": "paxcounter-node-red",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "03cc3ef8edc84196",
+        "type": "mqtt in",
+        "z": "ba2b8af8152cf861",
+        "name": "mqtt-in-all-topics",
+        "topic": "#",
+        "qos": "2",
+        "datatype": "json",
+        "broker": "71c341f69bcea5b9",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 280,
+        "y": 340,
+        "wires": [
+            [
+                "37f939ed637d6380",
+                "a75876ead6ce2483",
+                "3c1e75e7aa452d21"
+            ]
+        ]
+    },
+    {
+        "id": "a75876ead6ce2483",
+        "type": "debug",
+        "z": "ba2b8af8152cf861",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 450,
+        "y": 340,
+        "wires": []
+    },
+    {
+        "id": "37f939ed637d6380",
+        "type": "debug",
+        "z": "ba2b8af8152cf861",
+        "name": "readings",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload.uplink_message.decoded_payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 460,
+        "y": 420,
+        "wires": []
+    },
+    {
+        "id": "3c1e75e7aa452d21",
+        "type": "websocket out",
+        "z": "ba2b8af8152cf861",
+        "name": "ws-all",
+        "server": "41948c7ff89d6f12",
+        "client": "",
+        "x": 450,
+        "y": 520,
+        "wires": []
+    },
+    {
+        "id": "71c341f69bcea5b9",
+        "type": "mqtt-broker",
+        "name": "paxcounter-raphael",
+        "broker": "nam1.cloud.thethings.network",
+        "port": "1883",
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": "4",
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": "",
+        "willMsg": {},
+        "sessionExpiry": ""
+    },
+    {
+        "id": "41948c7ff89d6f12",
+        "type": "websocket-listener",
+        "path": "/ws/pax",
+        "wholemsg": "false"
+    }
+]

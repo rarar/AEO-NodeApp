@@ -116,6 +116,37 @@
       top: 50%;
       transform: translate(-50%, -50%);
     }
+    /* PAX */
+    .pax-section {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 40px;
+      background: red;
+      color: white;
+      padding: 5px 10px;
+    }
+
+    .pax-container {
+      width: 100%;
+      display: flex;
+      text-align: center;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .pax-title, .pax-readout {
+      font-size: 16px;
+      font-weight: normal;
+    }
+
+    .pax-readout {
+      margin-left: 10px;
+    }
+
+    /* END PAX */
+    
   </style>
   <script type="importmap">
     {
@@ -190,6 +221,12 @@
     <div class="eta">
       <h1>Anticipated Tipping Point</h1>
       <h2>—</h2>
+    </div>
+  </section>
+  <section class="pax-section">
+    <div class="pax-container">
+      <h1 class="pax-title">PAX</h1>
+      <h2 class="pax-readout">—</h2>
     </div>
   </section>
   <script src="socket.io.js"></script>
