@@ -40,12 +40,13 @@ import {
 let renderer, scene, camera, model, composer1, composer2, fullComposer;
 let pixelPass, effectSepia, bloomPass;
 let tippingPointOn = false;
+let tippingPointClockOn = false;
 let socket;
 
 const URBANIZATION_THRESHOLD = 2;
 const VOLUME_THRESHOLD = 4;
-const CO2_THRESHOLD = 300;
-const TVOC_THRESHOLD = 1;
+const CO2_THRESHOLD = 400;
+const TVOC_THRESHOLD = 0.5;
 
 // WEIGHTS
 const URBANIZATION_WEIGHT = 4;
@@ -57,11 +58,11 @@ let urbanizationLevel = 2;
 let volumeLevel = 0;
 let co2Level = 500;
 let tvocLevel = 300;
-let weightedAvg = 1;
+let weightedAvg = 0;
 let secondsElapsed = 0;
 
 // stopwatch stuff
-let [milliseconds,seconds,minutes,hours] = [0,0,0,0];
+let [milliseconds, seconds, minutes, hours] = [0, 0, 0, 0];
 let int = null;
 
 
@@ -93,39 +94,40 @@ function computeWeights() {
   let vRatio = (volumeLevel - VOLUME_THRESHOLD) / VOLUME_THRESHOLD;
   let cRatio = (co2Level - CO2_THRESHOLD) / CO2_THRESHOLD;
   let tRatio = (tvocLevel - TVOC_THRESHOLD) / TVOC_THRESHOLD;
-  weightedAvg = ((URBANIZATION_WEIGHT*uRatio) + (VOLUME_WEIGHT*vRatio) + (CO2_WEIGHT*cRatio) + (TVOC_WEIGHT*tRatio)) / (URBANIZATION_WEIGHT + VOLUME_WEIGHT + CO2_WEIGHT + TVOC_WEIGHT);
+  weightedAvg = ((URBANIZATION_WEIGHT * uRatio) + (VOLUME_WEIGHT * vRatio) + (CO2_WEIGHT * cRatio) + (TVOC_WEIGHT * tRatio)) / (URBANIZATION_WEIGHT + VOLUME_WEIGHT + CO2_WEIGHT + TVOC_WEIGHT);
   console.log("uRatio: " + uRatio + " | vRatio: " + vRatio + " | cRatio: " + cRatio + " | tRatio: " + tRatio);
-  console.log("weighted avg: " + weightedAvg);
-  console.log("seconds elapsed: " + secondsElapsed);
-  if (parseInt(secondsElapsed) < 5) weightedAvg = 1; // account for delay of AQI sensor
+  console.log("secondsElapsed = " + parseInt(secondsElapsed));
+  if (parseInt(secondsElapsed) < 5 || tippingPointOn) {
+    weightedAvg = 0; // account for delay of AQI sensor
+  }
 }
 
-function displayTimer(){
-    milliseconds+=10;
-    if(milliseconds == 1000){
-        milliseconds = 0;
-        seconds++;
-        if(seconds == 60){
-            seconds = 0;
-            minutes++;
-            if(minutes == 60){
-                minutes = 0;
-                hours++;
-            }
-        }
+function displayTimer() {
+  milliseconds += 10;
+  if (milliseconds == 1000) {
+    milliseconds = 0;
+    seconds++;
+    if (seconds == 60) {
+      seconds = 0;
+      minutes++;
+      if (minutes == 60) {
+        minutes = 0;
+        hours++;
+      }
     }
+  }
 
- let h = hours < 10 ? "0" + hours : hours;
- let m = minutes < 10 ? "0" + minutes : minutes;
- let s = seconds < 10 ? "0" + seconds : seconds;
- let ms = milliseconds < 10 ? "00" + milliseconds : milliseconds < 100 ? "0" + milliseconds : milliseconds;
+  let h = hours < 10 ? "0" + hours : hours;
+  let m = minutes < 10 ? "0" + minutes : minutes;
+  let s = seconds < 10 ? "0" + seconds : seconds;
+  let ms = milliseconds < 10 ? "00" + milliseconds : milliseconds < 100 ? "0" + milliseconds : milliseconds;
 
- document.querySelector(".top .elapsed h2").innerHTML = `${h}:${m}:${s}`;
- secondsElapsed = s;
+  document.querySelector(".top .elapsed h2").innerHTML = `${h}:${m}:${s}`;
+  secondsElapsed = s;
 }
 
 function setUpClock() {
-  int = setInterval(displayTimer,10);
+  int = setInterval(displayTimer, 10);
 }
 
 function init() {
@@ -306,32 +308,36 @@ function render() {
   requestAnimationFrame(render);
   const halfWidth = window.innerWidth / 2;
   model.rotation.y += 0.005;
-    if (!tippingPointOn) {
-      if (weightedAvg > 0 ) {
-        renderer.setScissorTest(true);
-        renderer.setScissor(0, 0, halfWidth, window.innerHeight);
-        composer1.render();
-        renderer.setScissor(halfWidth, 0, halfWidth, window.innerHeight);
-        composer2.render();
-        renderer.setScissorTest(false);
-        let pixelSize = weightedAvg * 2.5; // update this to include all sensor data
-        let sepiaValue = weightedAvg * 2.5; // update this to include all sensor data
-        pixelPass.uniforms["pixelSize"].value = pixelSize;
-      } else {
-        composer1.render();
-      }
-    } else {
-      // If the tipping point happens, blow shit up
-      bloomPass.strength = 10;
-      bloomPass.exposure = 0.5
-      bloomPass.radius = 10;
+  if (!tippingPointOn) {
+    if (weightedAvg > 0) {
+      renderer.setScissorTest(true);
+      renderer.setScissor(0, 0, halfWidth, window.innerHeight);
       composer1.render();
-      clearInterval(int);
+      renderer.setScissor(halfWidth, 0, halfWidth, window.innerHeight);
+      composer2.render();
+      renderer.setScissorTest(false);
+      let pixelSize = weightedAvg * 2.5; // update this to include all sensor data
+      let sepiaValue = weightedAvg * 2.5; // update this to include all sensor data
+      pixelPass.uniforms["pixelSize"].value = pixelSize;
+    } else {
+      composer1.render();
+    }
+  } else {
+    // If the tipping point happens, blow shit up
+    bloomPass.strength = 10;
+    bloomPass.exposure = 0.5
+    bloomPass.radius = 10;
+    composer1.render();
+    clearInterval(int);
+    if (!tippingPointClockOn) {
       document.querySelector(".top .elapsed h1").innerHTML = "Time of Tipping Point";
+      document.querySelector(".top .elapsed h2").innerHTML = displayCountdown(0);
       document.querySelector(".bottom").classList.add("hidden");
       document.querySelector(".top").classList.add("center");
-      scene.background = new THREE.Color("rgb(255, 0, 0)");
+      tippingPointClockOn = true;
     }
+    scene.background = new THREE.Color("rgb(255, 0, 0)");
+  }
 
   computeWeights();
 
@@ -384,6 +390,12 @@ function render() {
     }
   });
 
+  function displayCountdown(duration) {
+    let t = new Date();
+    t.setSeconds(t.getSeconds() + duration);
+    let splitString = t.toString().split(' ');
+    return splitString[1] + " " + splitString[2] + " @ " + splitString[4];
+  }
 
   socket.on('time remaining', function(msg) {
     // if (msg==null) return;
@@ -394,7 +406,7 @@ function render() {
       document.querySelector(".bottom .eta").classList.add("regen");
       document.querySelector("section.bottom").classList.add("regen-container");
     } else {
-      document.querySelector(".bottom .eta h2").innerHTML = msg.toFixed(1);
+      document.querySelector(".bottom .eta h2").innerHTML = displayCountdown(msg);
       document.querySelector(".bottom .eta h1").classList.remove("hidden");
       document.querySelector(".bottom .eta h2").classList.remove("clifton");
       document.querySelector(".bottom .eta").classList.remove("regen");

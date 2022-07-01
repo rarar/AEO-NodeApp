@@ -36,9 +36,6 @@ parser.on('data', data => {
   let dataArray = data.split(":");
   if (dataArray[5]==undefined || dataArray[1]==0) return;
   motorSpeed = dataArray[3];
-  // console.log("original input = " + dataArray[5]);
-  // console.log("in reverse? = " + dataArray[4]);
-  // console.log("motor speed = " + dataArray[3]);
   if (dataArray[4]==1) {
     currentRate = -dataArray[3];
     currentRate = scale(currentRate, -75.0, -255.0, -0.111, -1.05);
@@ -46,7 +43,6 @@ parser.on('data', data => {
     currentRate = dataArray[3];
     currentRate = scale(currentRate, 75.0, 255.0, 0.111, 1.05);
   }
-  // calculateLevel();
   io.emit('tipping point', dataArray[0]);
   io.emit('co2', dataArray[1]);
   io.emit('tvoc', dataArray[2]);
