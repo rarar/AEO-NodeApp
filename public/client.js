@@ -73,6 +73,14 @@ const bloomParams = {
   bloomRadius: 0.5
 };
 
+/* PAX */
+const PAX_SETTINGS = {
+  USE_PAX_SENSOR: true, //when false, skip running any code related to the pax sensor
+  DO_LOG: true, //when true, log the pax sensor data to the console
+}
+let paxCount = 0; //this will store the pax value
+/* END PAX */
+
 init();
 
 // Function to send data back to arduino
@@ -86,6 +94,10 @@ function setUpThresholdView() {
   document.querySelector(".left .eco2 h2").innerHTML = "< " + CO2_THRESHOLD + " ppm";
   document.querySelector(".left .tvoc h2").innerHTML = "< " + TVOC_THRESHOLD + " ppm";
   document.querySelector(".top .elapsed h2").innerHTML = "00:00:00";
+  if (PAX_SETTINGS.USE_PAX_SENSOR) {
+    //TODO: do create output for pax sensor, e.g.
+    //document.querySelector("[position] .pax h2").innerHTML = "0 people";
+  }
 }
 
 // Function to compute weights
@@ -95,8 +107,8 @@ function computeWeights() {
   let cRatio = (co2Level - CO2_THRESHOLD) / CO2_THRESHOLD;
   let tRatio = (tvocLevel - TVOC_THRESHOLD) / TVOC_THRESHOLD;
   weightedAvg = ((URBANIZATION_WEIGHT * uRatio) + (VOLUME_WEIGHT * vRatio) + (CO2_WEIGHT * cRatio) + (TVOC_WEIGHT * tRatio)) / (URBANIZATION_WEIGHT + VOLUME_WEIGHT + CO2_WEIGHT + TVOC_WEIGHT);
-  console.log("uRatio: " + uRatio + " | vRatio: " + vRatio + " | cRatio: " + cRatio + " | tRatio: " + tRatio);
-  console.log("secondsElapsed = " + parseInt(secondsElapsed));
+  //console.log("uRatio: " + uRatio + " | vRatio: " + vRatio + " | cRatio: " + cRatio + " | tRatio: " + tRatio);
+  //console.log("secondsElapsed = " + parseInt(secondsElapsed));
   if (parseInt(secondsElapsed) < 5 || tippingPointOn) {
     weightedAvg = 0; // account for delay of AQI sensor
   }
@@ -287,6 +299,22 @@ function init() {
     });
   });
   window.addEventListener('resize', onWindowResize);
+
+  if (PAX_SETTINGS.USE_PAX_SENSOR){
+    socket.on('pax',function(pax){
+      if (PAX_SETTINGS.DO_LOG){
+        console.log(pax);
+      }
+      
+      paxCount = pax;
+      //TODO: do something with pax data e.g.
+      //document.querySelector("[position] .pax h2").innerHTML = `${pax} people`;
+      //urbanizationLevel = pax;
+      //or optionally do this in the render loop (see below)
+    })
+  }
+
+
 }
 
 // Resize function
@@ -414,5 +442,9 @@ function render() {
     }
 
   });
+
+  if (PAX_SETTINGS.USE_PAX_SENSOR){
+    //TODO: (optionally) do something with paxCount on each render
+  }
 
 }
