@@ -43,7 +43,7 @@ let tippingPointOn = false;
 let tippingPointClockOn = false;
 let socket;
 
-const URBANIZATION_THRESHOLD = 4;
+const URBANIZATION_THRESHOLD = 2;
 const VOLUME_THRESHOLD = 4;
 const CO2_THRESHOLD = 400;
 const TVOC_THRESHOLD = 0.5;
@@ -54,7 +54,7 @@ const VOLUME_WEIGHT = 3;
 const CO2_WEIGHT = 5;
 const TVOC_WEIGHT = 5;
 
-let urbanizationLevel = 0;
+let urbanizationLevel = 2;
 let volumeLevel = 0;
 let co2Level = 500;
 let tvocLevel = 300;
@@ -73,49 +73,19 @@ const bloomParams = {
   bloomRadius: 0.5
 };
 
-// /* PAX */
-// const PAX_SETTINGS = {
-//   ws: "ws://127.0.0.1:1880/ws/pax",
-//   paxReadoutEl: '.pax-readout', //class name for where pax should display
-// }
-// let paxSocket;
-// // const $paxReadout = document.querySelector(PAX_SETTINGS.paxReadoutEl);
-// function initPaxSocket(){
-//   paxSocket = new WebSocket(PAX_SETTINGS.ws);
-//   paxSocket.onopen = function () {
-//     console.log("PAX Socket Connection Success");
-//   }
-//   paxSocket.onmessage = function(msg){
-//     let combinedReadings = 0;
-//     let decoded_payload;
-//     if (msg && msg.data){
-//
-//       const obj = JSON.parse(msg.data.trim());
-//       decoded_payload = obj.uplink_message?.decoded_payload;
-//       if (decoded_payload){
-//         const ble = decoded_payload.ble || 0;
-//         const wifi = decoded_payload.wifi || 0;
-//         console.log(ble,wifi);
-//         const paxReadout = ble+wifi;
-//         // $paxReadout.innerHTML = paxReadout;
-//       }
-//
-//     } else {
-//       console.log("no msg data");
-//       // $paxReadout.innerHTML = "-";
-//     }
-//   }
-// }
-
-
-
+/* PAX */
+const PAX_SETTINGS = {
+  USE_PAX_SENSOR: true, //when false, skip running any code related to the pax sensor
+  DO_LOG: true, //when true, log the pax sensor data to the console
+}
+let paxCount = 0; //this will store the pax value
 /* END PAX */
 
 init();
 
 // Function to send data back to arduino
 function sendValsToArduino() {
-  socket.emit('avg', weightedAvg.toFixed(1));
+  socket.emit('weighted avg', weightedAvg.toFixed(1));
 }
 
 function setUpThresholdView() {
@@ -124,6 +94,10 @@ function setUpThresholdView() {
   document.querySelector(".left .eco2 h2").innerHTML = "< " + CO2_THRESHOLD + " ppm";
   document.querySelector(".left .tvoc h2").innerHTML = "< " + TVOC_THRESHOLD + " ppm";
   document.querySelector(".top .elapsed h2").innerHTML = "00:00:00";
+  if (PAX_SETTINGS.USE_PAX_SENSOR) {
+    //TODO: do create output for pax sensor, e.g.
+    //document.querySelector("[position] .pax h2").innerHTML = "0 people";
+  }
 }
 
 // Function to compute weights
@@ -133,9 +107,8 @@ function computeWeights() {
   let cRatio = (co2Level - CO2_THRESHOLD) / CO2_THRESHOLD;
   let tRatio = (tvocLevel - TVOC_THRESHOLD) / TVOC_THRESHOLD;
   weightedAvg = ((URBANIZATION_WEIGHT * uRatio) + (VOLUME_WEIGHT * vRatio) + (CO2_WEIGHT * cRatio) + (TVOC_WEIGHT * tRatio)) / (URBANIZATION_WEIGHT + VOLUME_WEIGHT + CO2_WEIGHT + TVOC_WEIGHT);
-  console.log("uRatio: " + uRatio + " | vRatio: " + vRatio + " | cRatio: " + cRatio + " | tRatio: " + tRatio);
-  console.log("weighted avg = " + weightedAvg);
-  console.log("secondsElapsed = " + parseInt(secondsElapsed));
+  //console.log("uRatio: " + uRatio + " | vRatio: " + vRatio + " | cRatio: " + cRatio + " | tRatio: " + tRatio);
+  //console.log("secondsElapsed = " + parseInt(secondsElapsed));
   if (parseInt(secondsElapsed) < 5 || tippingPointOn) {
     weightedAvg = 0; // account for delay of AQI sensor
   }
@@ -171,8 +144,6 @@ function setUpClock() {
 
 function init() {
 
-  // Init PAX_SETTINGS
-  // initPaxSocket();
   // Initialize Socket
   socket = io();
   setUpThresholdView();
@@ -206,6 +177,7 @@ function init() {
         const volumeReading = document.querySelector(".right .noise h2");
         volumeReading.innerHTML = volumeLevel + " dB";
         if (volumeLevel > 3 * VOLUME_THRESHOLD) {
+          console.log("turning volume red");
           volumeReading.classList.remove("yellow");
           volumeReading.classList.remove("orange");
           volumeReading.classList.add("red");
@@ -321,17 +293,16 @@ function init() {
         model = child;
         model.rotation.z = .22;
         scene.add(model);
-        update();
+        render();
       }
 
     });
   });
   window.addEventListener('resize', onWindowResize);
-<<<<<<< Updated upstream
-=======
 
   if (PAX_SETTINGS.USE_PAX_SENSOR){
     socket.on('pax',function(pax){
+      //alert("receiving");
       if (PAX_SETTINGS.DO_LOG){
         console.log(pax);
       }
@@ -359,11 +330,10 @@ function init() {
       //document.querySelector("[position] .pax h2").innerHTML = `${pax} people`;
       //urbanizationLevel = pax;
       //or optionally do this in the render loop (see below)
-    });
+    })
   }
 
 
->>>>>>> Stashed changes
 }
 
 
@@ -379,27 +349,11 @@ function onWindowResize() {
 
 }
 
-let clock = new THREE.Clock();
-let delta = 0;
-// 30 fps
-let interval = 1 / 30;
 
-function update() {
-  requestAnimationFrame(update);
-  // console.log("entered update");
-  delta += clock.getDelta();
-
-   if (delta  > interval) {
-       // The draw or time dependent code are here
-       render();
-
-       delta = delta % interval;
-   }
-}
 // Main render loop
 function render() {
-
-  // requestAnimationFrame(render);
+  //alert("entering");
+  requestAnimationFrame(render);
   const halfWidth = window.innerWidth / 2;
   model.rotation.y += 0.005;
   if (!tippingPointOn) {
@@ -449,9 +403,6 @@ function displayCountdown(duration) {
   return splitString[1] + " " + splitString[2] + " @ " + splitString[4];
 }
 
-<<<<<<< Updated upstream
-}
-=======
 socket.on('time remaining', function(msg) {
   // if (msg==null) return;
   if (parseInt(msg) < 0) {
@@ -519,4 +470,3 @@ socket.on('tvoc', function(msg) {
     document.querySelector(".right .tvoc h2").classList.remove("yellow");
   }
 });
->>>>>>> Stashed changes

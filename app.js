@@ -14,11 +14,10 @@ const {
 } = require("socket.io");
 const io = new Server(server);
 
-<<<<<<< Updated upstream
 // Create a port
 const port = new SerialPort({
   path: '/dev/cu.usbserial-A50285BI',
-  baudRate: 9600,
+  baudRate: 115200,
 });
 const parser = port.pipe(new ReadlineParser({
   delimiter: '\n'
@@ -32,24 +31,23 @@ let tp = 350;
 let currentRate = 0;
 let motorSpeed = 0;
 let timeRemaining;
-=======
 /* PAX */
 const PAX_SETTINGS = {
     USE_PAX_SENSOR: true, //when false, skip running any code related to the pax sensor
     USE_PARSER: false, // when false, pipe the data to a readline parser with delimiter
     PORT_PATH: '/dev/tty.usbmodem54280058331', //name of the port the usb is plugged in to
     PORT_BAUD: 115200, //probably going to be 115200 - possibly 9600.
-    DEBUG_PAX_ONLY: false, //when true, don't run any other sensor code
-    DO_LOG: false, //when true, log PAX data to a console
+    DEBUG_PAX_ONLY: true, //when true, don't run any other sensor code
+    DO_LOG: true, //when true, log PAX data to a console
 }
 
 let paxPort, //the port we will open with serialports
  pax, //the actual count of devices we find
  paxParser, //the parser we will (optionally) use to parse the incoming serial data
  parsePaxFn //the function we will pass the serial data to to integrate into the visualization
->>>>>>> Stashed changes
 
 parser.on('data', data => {
+  console.log("data " + data);
   let dataArray = data.split(":");
   if (dataArray[5]==undefined || dataArray[1]==0) return;
   motorSpeed = dataArray[3];
