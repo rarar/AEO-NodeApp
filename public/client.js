@@ -307,10 +307,6 @@ function init() {
       }
 
       urbanizationLevel = pax;
-      //TODO: do something with pax data e.g.
-      //document.querySelector("[position] .pax h2").innerHTML = `${pax} people`;
-      //urbanizationLevel = pax;
-      //or optionally do this in the render loop (see below)
       document.querySelector(".right .urbanization h2").innerHTML = "" + urbanizationLevel + " people";
       if (urbanizationLevel > 3 * URBANIZATION_THRESHOLD) {
         document.querySelector(".right .urbanization h2").classList.remove("yellow");
