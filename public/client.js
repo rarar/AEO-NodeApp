@@ -54,7 +54,7 @@ const VOLUME_WEIGHT = 3;
 const CO2_WEIGHT = 5;
 const TVOC_WEIGHT = 5;
 
-let urbanizationLevel = 2;
+let urbanizationLevel = 0;
 let volumeLevel = 0;
 let co2Level = 500;
 let tvocLevel = 300;
@@ -302,12 +302,15 @@ function init() {
 
   if (PAX_SETTINGS.USE_PAX_SENSOR){
     socket.on('pax',function(pax){
-      //alert("receiving");
       if (PAX_SETTINGS.DO_LOG){
         console.log(pax);
       }
 
       urbanizationLevel = pax;
+      //TODO: do something with pax data e.g.
+      //document.querySelector("[position] .pax h2").innerHTML = `${pax} people`;
+      //urbanizationLevel = pax;
+      //or optionally do this in the render loop (see below)
       document.querySelector(".right .urbanization h2").innerHTML = "" + urbanizationLevel + " people";
       if (urbanizationLevel > 3 * URBANIZATION_THRESHOLD) {
         document.querySelector(".right .urbanization h2").classList.remove("yellow");
@@ -385,18 +388,84 @@ function render() {
 
   computeWeights();
 
-
-  if (PAX_SETTINGS.USE_PAX_SENSOR){
-    //TODO: (optionally) do something with paxCount on each render
-  }
-
 }
+
+socket.on('tipping point', function(msg) {
+  if (msg == 0) tippingPointOn = true;
+});
+
+socket.on('co2', function(msg) {
+  // if (msg==null) return;
+  co2Level = msg;
+  document.querySelector(".right .eco2 h2").innerHTML = "" + msg + " ppm";
+  if (msg > 3 * CO2_THRESHOLD) {
+    document.querySelector(".right .eco2 h2").classList.remove("yellow");
+    document.querySelector(".right .eco2 h2").classList.remove("orange");
+    document.querySelector(".right .eco2 h2").classList.add("red");
+  } else if (msg > 2 * CO2_THRESHOLD) {
+    document.querySelector(".right .eco2 h2").classList.remove("red");
+    document.querySelector(".right .eco2 h2").classList.remove("yellow");
+    document.querySelector(".right .eco2 h2").classList.add("orange");
+  } else if (msg > 1.5 * CO2_THRESHOLD) {
+    document.querySelector(".right .eco2 h2").classList.remove("red");
+    document.querySelector(".right .eco2 h2").classList.remove("orange");
+    document.querySelector(".right .eco2 h2").classList.add("yellow");
+  } else {
+    document.querySelector(".right .eco2 h2").classList.remove("red");
+    document.querySelector(".right .eco2 h2").classList.remove("orange");
+    document.querySelector(".right .eco2 h2").classList.remove("yellow");
+  }
+});
+socket.on('tvoc', function(msg) {
+  // if (msg==null) return;
+  tvocLevel = msg;
+  document.querySelector(".right .tvoc h2").innerHTML = "" + msg + " ppm";
+  if (msg > 3 * TVOC_THRESHOLD) {
+    document.querySelector(".right .tvoc h2").classList.remove("yellow");
+    document.querySelector(".right .tvoc h2").classList.remove("orange");
+    document.querySelector(".right .tvoc h2").classList.add("red");
+  } else if (msg > 2 * TVOC_THRESHOLD) {
+    document.querySelector(".right .tvoc h2").classList.remove("red");
+    document.querySelector(".right .tvoc h2").classList.remove("yellow");
+    document.querySelector(".right .tvoc h2").classList.add("orange");
+  } else if (msg > 1.5 * TVOC_THRESHOLD) {
+    document.querySelector(".right .tvoc h2").classList.remove("red");
+    document.querySelector(".right .tvoc h2").classList.remove("orange");
+    document.querySelector(".right .tvoc h2").classList.add("yellow");
+  } else {
+    document.querySelector(".right .tvoc h2").classList.remove("red");
+    document.querySelector(".right .tvoc h2").classList.remove("orange");
+    document.querySelector(".right .tvoc h2").classList.remove("yellow");
+  }
+});
 
 function displayCountdown(duration) {
   let t = new Date();
   t.setSeconds(t.getSeconds() + duration);
   let splitString = t.toString().split(' ');
   return splitString[1] + " " + splitString[2] + " @ " + splitString[4];
+}
+
+socket.on('time remaining', function(msg) {
+  // if (msg==null) return;
+  if (parseInt(msg) < 0) {
+    document.querySelector(".bottom .eta h2").innerHTML = "Regenerative State";
+    document.querySelector(".bottom .eta h1").classList.add("hidden");
+    document.querySelector(".bottom .eta h2").classList.add("clifton");
+    document.querySelector(".bottom .eta").classList.add("regen");
+    document.querySelector("section.bottom").classList.add("regen-container");
+  } else {
+    document.querySelector(".bottom .eta h2").innerHTML = displayCountdown(msg);
+    document.querySelector(".bottom .eta h1").classList.remove("hidden");
+    document.querySelector(".bottom .eta h2").classList.remove("clifton");
+    document.querySelector(".bottom .eta").classList.remove("regen");
+    document.querySelector("section.bottom").classList.remove("regen-container");
+  }
+
+});
+
+if (PAX_SETTINGS.USE_PAX_SENSOR){
+  //TODO: (optionally) do something with paxCount on each render
 }
 
 socket.on('time remaining', function(msg) {
