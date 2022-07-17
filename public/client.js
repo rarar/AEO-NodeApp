@@ -73,11 +73,49 @@ const bloomParams = {
   bloomRadius: 0.5
 };
 
+// /* PAX */
+// const PAX_SETTINGS = {
+//   ws: "ws://127.0.0.1:1880/ws/pax",
+//   paxReadoutEl: '.pax-readout', //class name for where pax should display
+// }
+// let paxSocket;
+// // const $paxReadout = document.querySelector(PAX_SETTINGS.paxReadoutEl);
+// function initPaxSocket(){
+//   paxSocket = new WebSocket(PAX_SETTINGS.ws);
+//   paxSocket.onopen = function () {
+//     console.log("PAX Socket Connection Success");
+//   }
+//   paxSocket.onmessage = function(msg){
+//     let combinedReadings = 0;
+//     let decoded_payload;
+//     if (msg && msg.data){
+//
+//       const obj = JSON.parse(msg.data.trim());
+//       decoded_payload = obj.uplink_message?.decoded_payload;
+//       if (decoded_payload){
+//         const ble = decoded_payload.ble || 0;
+//         const wifi = decoded_payload.wifi || 0;
+//         console.log(ble,wifi);
+//         const paxReadout = ble+wifi;
+//         // $paxReadout.innerHTML = paxReadout;
+//       }
+//
+//     } else {
+//       console.log("no msg data");
+//       // $paxReadout.innerHTML = "-";
+//     }
+//   }
+// }
+
+
+
+/* END PAX */
+
 init();
 
 // Function to send data back to arduino
 function sendValsToArduino() {
-  socket.emit('weighted avg', weightedAvg.toFixed(1));
+  socket.emit('avg', weightedAvg.toFixed(1));
 }
 
 function setUpThresholdView() {
@@ -96,6 +134,7 @@ function computeWeights() {
   let tRatio = (tvocLevel - TVOC_THRESHOLD) / TVOC_THRESHOLD;
   weightedAvg = ((URBANIZATION_WEIGHT * uRatio) + (VOLUME_WEIGHT * vRatio) + (CO2_WEIGHT * cRatio) + (TVOC_WEIGHT * tRatio)) / (URBANIZATION_WEIGHT + VOLUME_WEIGHT + CO2_WEIGHT + TVOC_WEIGHT);
   console.log("uRatio: " + uRatio + " | vRatio: " + vRatio + " | cRatio: " + cRatio + " | tRatio: " + tRatio);
+  console.log("weighted avg = " + weightedAvg);
   console.log("secondsElapsed = " + parseInt(secondsElapsed));
   if (parseInt(secondsElapsed) < 5 || tippingPointOn) {
     weightedAvg = 0; // account for delay of AQI sensor
@@ -132,6 +171,8 @@ function setUpClock() {
 
 function init() {
 
+  // Init PAX_SETTINGS
+  // initPaxSocket();
   // Initialize Socket
   socket = io();
   setUpThresholdView();
@@ -165,7 +206,6 @@ function init() {
         const volumeReading = document.querySelector(".right .noise h2");
         volumeReading.innerHTML = volumeLevel + " dB";
         if (volumeLevel > 3 * VOLUME_THRESHOLD) {
-          console.log("turning volume red");
           volumeReading.classList.remove("yellow");
           volumeReading.classList.remove("orange");
           volumeReading.classList.add("red");
@@ -281,7 +321,7 @@ function init() {
         model = child;
         model.rotation.z = .22;
         scene.add(model);
-        render();
+        update();
       }
 
     });
@@ -301,11 +341,27 @@ function onWindowResize() {
 
 }
 
+let clock = new THREE.Clock();
+let delta = 0;
+// 30 fps
+let interval = 1 / 30;
 
+function update() {
+  requestAnimationFrame(update);
+  // console.log("entered update");
+  delta += clock.getDelta();
+
+   if (delta  > interval) {
+       // The draw or time dependent code are here
+       render();
+
+       delta = delta % interval;
+   }
+}
 // Main render loop
 function render() {
 
-  requestAnimationFrame(render);
+  // requestAnimationFrame(render);
   const halfWidth = window.innerWidth / 2;
   model.rotation.y += 0.005;
   if (!tippingPointOn) {

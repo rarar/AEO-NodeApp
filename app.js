@@ -59,9 +59,10 @@ function calculateLevel() {
 
 io.on('connection', (socket) => {
   console.log('a user connected');
-  setInterval(calculateLevel, 1000);
-  socket.on('weighted avg', (avg) => {
+  // setInterval(calculateLevel, 1000);
+  socket.on('avg', (avg) => {
     console.log('weighted avg: ' + avg);
+    calculateLevel();
     port.write(avg+'\n', (err) => {
       if (err) {
         return console.log('Error on write: ', err.message);
