@@ -6,9 +6,33 @@
   <title>An Ecological Oracle</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
+    @font-face {
+      font-family: "CliftonRegular";
+      src: url('clifton-regular.woff2') format('woff2'),
+           url('clifton-regular.woff') format('woff');
+      font-weight: normal;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: "CliftonItalic";
+      src: url('clifton-italic.woff2') format('woff2'),
+           url('clifton-italic.woff') format('woff');
+      font-weight: normal;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: "Knif";
+      src: url('knif.woff2') format('woff2'),
+           url('knif.woff') format('woff');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+
     body {
       overflow: hidden;
       margin: 0px;
+      cursor: none;
     }
 
     section.left {
@@ -55,12 +79,11 @@
     }
 
     h1 {
-      font-style: italic;
-      font-family: "Clifton";
+      font-family: 'CliftonItalic';
     }
 
     h2 {
-      font-family: "Knif Mono";
+      font-family: 'Knif';
       font-size: 2rem;
       margin: 0;
     }
@@ -74,8 +97,7 @@
     }
 
     .clifton {
-      font-style: italic;
-      font-family: "Clifton";
+      font-family: 'CliftonItalic';
       font-size: 1.5em;
     }
 
@@ -93,7 +115,9 @@
     }
 
     @keyframes mymove {
-      50% {box-shadow: 0 0px 48px rgba(81, 255, 0, .88)}
+      50% {
+        box-shadow: 0 0px 48px rgba(81, 255, 0, .88)
+      }
     }
 
     .yellow {

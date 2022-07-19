@@ -43,14 +43,19 @@ let tippingPointOn = false;
 let tippingPointClockOn = false;
 let socket;
 
-const URBANIZATION_THRESHOLD = 2;
+/**
+  This is the most important block!
+  Adjust thresholds and weights below:
+*/
+
+const URBANIZATION_THRESHOLD = 4;
 const VOLUME_THRESHOLD = 4;
 const CO2_THRESHOLD = 400;
-const TVOC_THRESHOLD = 0.5;
+const TVOC_THRESHOLD = 2;
 
 // WEIGHTS
-const URBANIZATION_WEIGHT = 4;
-const VOLUME_WEIGHT = 3;
+const URBANIZATION_WEIGHT = 6;
+const VOLUME_WEIGHT = 2;
 const CO2_WEIGHT = 5;
 const TVOC_WEIGHT = 5;
 
