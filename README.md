@@ -16,6 +16,9 @@ The two wires the control the read from the AQI sensor will be fed into A5 and A
 The motor should be secured in the motor shield. In the case it is not, it should be screwed into + and - in one of the terminals.
 
 ![alt AQI](AQI.jpeg)
+![alt Breadboard](breadboard.jpeg)
+![alt Arduino](arduino.jpeg)
+![alt Arduino](arduino-2.jpeg)
 
 ### ESP 32
 This microcontroller will count bluetooth and wifi data. It should be plug-and-play with a USB port.
