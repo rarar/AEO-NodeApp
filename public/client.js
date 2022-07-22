@@ -48,7 +48,7 @@ let socket;
   Adjust thresholds and weights below:
 */
 
-const URBANIZATION_THRESHOLD = 4;
+const URBANIZATION_THRESHOLD = 15;
 const VOLUME_THRESHOLD = 4;
 const CO2_THRESHOLD = 400;
 const TVOC_THRESHOLD = 2;
