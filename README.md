@@ -35,21 +35,27 @@ The installation operates using a local node.js app. _This app is best run on Go
 
 ### Node installation
 The app should be able to run with the latest version of node. Download the repository, open up Terminal and navigate to the directory. From there, type:
+```
   npm install
+```
 
 Once the app is installed type:
+```
   npm start
+```
 
 If there are errors with the serial connections, Terminal will likely yell at you here. You'll need to change the names of ports in the app.js file.
 
 If all goes smoothly, open up a new Chrome window and type:
+```
   http://localhost:3000
+```
 
 Everything should be running now. You'll see console.log statements in the terminal which will tell you about motor speed.
 
 ### Calibrating
 In client.js at the top of the file, we'll want to calibrate all of the settings. These are all held in the following blocks:
-
+```
   /**
     This is the most important block!
     Adjust thresholds and weights below:
@@ -65,3 +71,6 @@ In client.js at the top of the file, we'll want to calibrate all of the settings
   const VOLUME_WEIGHT = 2;
   const CO2_WEIGHT = 5;
   const TVOC_WEIGHT = 5;
+```
+
+When the tipping point strikes, the front end will let you know the time elapsed. We can use that as a gauge to determine how to go about adjusting the weights/calibrated states daily.
